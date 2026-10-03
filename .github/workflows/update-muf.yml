@@ -1,0 +1,126 @@
+name: Update Alaska MUF
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Southcentral Alaska MUF feed
+        shell: python
+        run: |
+          import json, math, urllib.request
+          from datetime import datetime, timezone
+
+          URL = "https://prop.kc2g.com/api/stations.json"
+          LAT, LON = 61.5997, -149.1128
+
+          def num(v):
+              try:
+                  x = float(v)
+                  return x if math.isfinite(x) else None
+              except Exception:
+                  return None
+
+          def parse_time(v):
+              if not v:
+                  return None
+              s = str(v).replace("Z", "+00:00")
+              try:
+                  d = datetime.fromisoformat(s)
+                  if d.tzinfo is None:
+                      d = d.replace(tzinfo=timezone.utc)
+                  return d.astimezone(timezone.utc)
+              except Exception:
+                  return None
+
+          def km(lat1, lon1, lat2, lon2):
+              r = 6371.0
+              p1, p2 = math.radians(lat1), math.radians(lat2)
+              dp = math.radians(lat2-lat1)
+              dl = math.radians(lon2-lon1)
+              a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+              return 2*r*math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+          req = urllib.request.Request(URL, headers={"User-Agent":"KL5NE-Ham-WX/0.4"})
+          with urllib.request.urlopen(req, timeout=30) as r:
+              rows = json.load(r)
+
+          now = datetime.now(timezone.utc)
+          usable = []
+          for x in rows:
+              s = x.get("station") or {}
+              slat, slon = num(s.get("latitude")), num(s.get("longitude"))
+              mufd, fof2, cs = num(x.get("mufd")), num(x.get("fof2")), num(x.get("cs"))
+              ts = parse_time(x.get("time"))
+              if slat is None or slon is None or mufd is None or ts is None:
+                  continue
+              age = (now-ts).total_seconds()/60
+              if age < 0 or age > 180:
+                  continue
+              if cs is not None and cs != -1 and cs < 50:
+                  continue
+              dist = km(LAT,LON,slat,slon)
+              if dist > 3200:
+                  continue
+              quality = 0.8 if cs is None or cs == -1 else max(0.35, min(1.0, cs/100.0))
+              freshness = max(0.2, 1-age/240.0)
+              weight = quality*freshness/((dist+250.0)**1.7)
+              usable.append({
+                  "name": s.get("name") or s.get("code") or "GIRO",
+                  "distance_km": dist,
+                  "mufd": mufd,
+                  "fof2": fof2,
+                  "cs": cs,
+                  "age_min": age,
+                  "weight": weight,
+                  "time": ts.isoformat()
+              })
+
+          usable.sort(key=lambda x: x["distance_km"])
+          use = usable[:6]
+          if not use:
+              raise SystemExit("No recent regional ionosonde data")
+
+          sw = sum(x["weight"] for x in use)
+          muf = sum(x["mufd"]*x["weight"] for x in use)/sw
+          f = [x for x in use if x["fof2"] is not None]
+          sf = sum(x["weight"] for x in f)
+          fof2 = (sum(x["fof2"]*x["weight"] for x in f)/sf) if f and sf else None
+
+          out = {
+              "generated_utc": now.isoformat(),
+              "muf3000_mhz": round(muf, 1),
+              "fof2_mhz": round(fof2, 1) if fof2 is not None else None,
+              "nearest_station": use[0]["name"],
+              "nearest_distance_km": round(use[0]["distance_km"]),
+              "newest_age_min": round(min(x["age_min"] for x in use)),
+              "station_count": len(use),
+              "source": "KC2G / GIRO",
+              "method": "Southcentral Alaska distance/freshness/confidence weighted estimate"
+          }
+
+          with open("/tmp/muf.json","w",encoding="utf-8") as fh:
+              json.dump(out, fh, separators=(",",":"))
+
+      - name: Publish live-data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan live-data-temp
+          git rm -rf .
+          cp /tmp/muf.json ./muf.json
+          git add muf.json
+          git commit -m "Update live MUF data"
+          git push --force origin HEAD:live-data
