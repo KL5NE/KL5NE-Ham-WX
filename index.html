@@ -21,32 +21,32 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
-body{padding:14px}
-.shell{height:100%;display:grid;grid-template-columns:1.7fr .92fr;gap:14px}
+body{padding:var(--space-pad,10px)}
+.shell{height:100%;width:100%;display:grid;grid-template-columns:1.7fr .92fr;gap:var(--space-gap,10px)}
 .panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;min-width:0;overflow:hidden}
-.space{display:grid;grid-template-rows:auto 1fr auto;padding:17px 20px 14px}
-.weather{display:grid;grid-template-rows:auto 1fr auto;padding:17px 20px 14px}
+.space{display:grid;grid-template-rows:auto 1fr auto;padding:var(--panel-pad-y,12px) var(--panel-pad-x,16px)}
+.weather{display:grid;grid-template-rows:auto 1fr auto;padding:var(--panel-pad-y,12px) var(--panel-pad-x,16px)}
 .head{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
-.title{font-size:23px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.sub{font-size:13px;color:var(--muted);white-space:nowrap}
-.live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.title{font-size:var(--fs-title,20px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.sub{font-size:var(--fs-small,12px);color:var(--muted);white-space:nowrap}
+.live{display:flex;align-items:center;gap:8px;font-size:var(--fs-small,12px);color:var(--muted)}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 10px color-mix(in srgb,var(--good) 65%, transparent)}
 .dot.stale{background:var(--warn)}
 .dot.off{background:var(--bad)}
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:stretch;padding:13px 0 10px}
-.metric{background:#081015;border:1px solid #1d2a31;border-radius:14px;padding:11px 12px;min-width:0}
-.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.11em}
-.value{font-size:34px;font-weight:800;line-height:1.05;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--space-gap,10px);align-items:stretch;padding:var(--metrics-pad,10px) 0}
+.metric{background:#081015;border:1px solid #1d2a31;border-radius:var(--radius,14px);padding:var(--metric-pad,10px);min-width:0}
+.label{font-size:var(--fs-label,11px);color:var(--muted);text-transform:uppercase;letter-spacing:.11em}
+.value{font-size:var(--fs-value,30px);font-weight:800;line-height:1.05;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)} .ice{color:var(--ice)} .violet{color:var(--violet)}
-.impact{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.impact{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--space-gap,10px)}
 .impactCard{background:#071015;border:1px solid #1d2a31;border-radius:14px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.impactBig{font-size:22px;font-weight:800}
+.impactBig{font-size:var(--fs-impact,20px);font-weight:800}
 .bands{display:flex;gap:7px;align-items:center;flex-wrap:nowrap}
-.band{padding:7px 10px;border-radius:999px;background:#102027;border:1px solid #223740;font-size:13px;font-weight:700;white-space:nowrap}
+.band{padding:var(--band-py,6px) var(--band-px,9px);border-radius:999px;background:#102027;border:1px solid #223740;font-size:var(--fs-small,12px);font-weight:700;white-space:nowrap}
 .wxMain{display:grid;grid-template-columns:1fr 1.1fr;align-items:center;gap:14px;padding:16px 0 9px}
-.temp{font-size:72px;line-height:.92;font-weight:850;letter-spacing:-.05em}
-.condition{font-size:18px;font-weight:700;margin-top:7px}
-.feels{font-size:13px;color:var(--muted);margin-top:3px}
+.temp{font-size:var(--fs-temp,64px);line-height:.92;font-weight:850;letter-spacing:-.05em}
+.condition{font-size:var(--fs-condition,17px);font-weight:700;margin-top:7px}
+.feels{font-size:var(--fs-small,12px);color:var(--muted);margin-top:3px}
 .wxStats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .wxstat{background:#081015;border:1px solid #1d2a31;border-radius:13px;padding:10px}
 .wxstat strong{display:block;font-size:19px;margin-top:3px}
@@ -56,8 +56,15 @@ body{padding:14px}
 .hour .d{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .hour .n{font-size:18px;font-weight:800;margin-top:2px}
 .footer{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:11px;color:#60737c;letter-spacing:.05em;pointer-events:none}
-@media(max-width:1100px){
- body{padding:8px}.shell{gap:8px}.space,.weather{padding:10px 12px}.title{font-size:17px}.value{font-size:25px}.temp{font-size:50px}.label{font-size:10px}.metric{padding:8px}.bands{gap:4px}.band{padding:5px 6px;font-size:10px}
+body.expanded .shell{grid-template-columns:1.85fr .95fr}
+body.expanded .metrics{gap:14px}
+body.expanded .metric{display:flex;flex-direction:column;justify-content:center}
+body.expanded .impactCard{min-height:72px}
+@media(max-width:900px){
+ .shell{grid-template-columns:1fr}
+ .weather{display:none}
+ .metrics{grid-template-columns:repeat(5,1fr)}
+ .impact{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -246,7 +253,37 @@ function tickClock(){
   const utc=d.toLocaleTimeString([],{timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false});
   clock.textContent=`AK/local ${local}   ·   UTC ${utc}Z`;
 }
+function applyResponsiveTokens(){
+  const w=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0);
+  const h=Math.max(document.documentElement.clientHeight||0,window.innerHeight||0);
+  const shortEdge=Math.min(w,h);
+  const areaEdge=Math.sqrt(Math.max(1,w*h));
+  const base=shortEdge*0.68+areaEdge*0.32;
+  const root=document.documentElement.style;
+  const clamp=(min,v,max)=>Math.max(min,Math.min(max,v));
+  root.setProperty('--fs-title',clamp(16,base*0.055,34)+'px');
+  root.setProperty('--fs-small',clamp(11,base*0.026,18)+'px');
+  root.setProperty('--fs-label',clamp(10,base*0.023,16)+'px');
+  root.setProperty('--fs-value',clamp(24,base*0.085,52)+'px');
+  root.setProperty('--fs-impact',clamp(18,base*0.052,32)+'px');
+  root.setProperty('--fs-temp',clamp(48,base*0.17,108)+'px');
+  root.setProperty('--fs-condition',clamp(15,base*0.04,25)+'px');
+  root.setProperty('--space-pad',clamp(6,base*0.018,18)+'px');
+  root.setProperty('--space-gap',clamp(6,base*0.018,18)+'px');
+  root.setProperty('--panel-pad-y',clamp(9,base*0.025,22)+'px');
+  root.setProperty('--panel-pad-x',clamp(11,base*0.035,28)+'px');
+  root.setProperty('--metric-pad',clamp(8,base*0.024,20)+'px');
+  root.setProperty('--metrics-pad',clamp(8,base*0.022,18)+'px');
+  root.setProperty('--radius',clamp(10,base*0.03,22)+'px');
+  root.setProperty('--band-py',clamp(4,base*0.012,10)+'px');
+  root.setProperty('--band-px',clamp(6,base*0.02,14)+'px');
+  document.body.classList.toggle('expanded',w>=1200 && h>=360);
+}
+
 function init(){
+  applyResponsiveTokens();
+  new ResizeObserver(applyResponsiveTokens).observe(document.documentElement);
+  window.addEventListener('resize',applyResponsiveTokens);
   tickClock();updateSpace();updateWeather();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
