@@ -1,0 +1,43 @@
+name: Build iCUE Widget
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate and package KL5NE Ham WX
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install CORSAIR iCUE Widget CLI
+        run: npm install --global icuewidget-cli@latest
+
+      - name: Show CLI version
+        run: icuewidget --version
+
+      - name: Validate widget
+        run: icuewidget validate .
+
+      - name: Package widget
+        run: icuewidget package . -o KL5NE-Ham-WX.icuewidget
+
+      - name: Upload installable widget
+        uses: actions/upload-artifact@v4
+        with:
+          name: KL5NE-Ham-WX
+          path: KL5NE-Ham-WX.icuewidget
+          if-no-files-found: error
+          retention-days: 30
