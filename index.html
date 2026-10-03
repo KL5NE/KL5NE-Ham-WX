@@ -120,7 +120,7 @@ body{padding:var(--pad)}
       <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value ice">--</div><div class="subvalue">SFI · 10.7 cm</div></div>
       <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="subvalue">Geomagnetic</div></div>
       <div class="metric"><div class="label">A Index</div><div id="aidx" class="value">--</div><div class="subvalue">Running A</div></div>
-      <div class="metric"><div class="label">Alaska MUF</div><div id="muf" class="value ice">--</div><div id="mufNote" class="subvalue">MHz · King Salmon proxy</div></div>
+      <div class="metric"><div class="label">MUF3000 · S. Central AK</div><div id="muf" class="value ice">--</div><div id="mufNote" class="subvalue">KC2G / GIRO · waiting</div></div>
       <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="subvalue">nT · south is rough</div></div>
       <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="subvalue">km/s</div></div>
     </div>
@@ -207,7 +207,7 @@ const NOAA={
   kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
-const HAMQSL_MUF='https://www.hamqsl.com/solarxml.php?muf=alska';
+const KC2G_STATIONS='https://prop.kc2g.com/api/stations.json';
 let started=false;
 
 function prop(name,fallback){
@@ -307,28 +307,71 @@ function iconSvg(desc){
   return '<svg viewBox="0 0 64 64"><path d="M16 43h32a12 12 0 0 0 0-24 17 17 0 0 0-32 6A9 9 0 0 0 16 43z"/></svg>';
 }
 
+function kmBetween(lat1,lon1,lat2,lon2){
+  const R=6371,toRad=x=>x*Math.PI/180;
+  const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function stationNumber(v){
+  const x=Number(v);
+  return Number.isFinite(x)?x:null;
+}
+function estimateIono(stations,lat,lon){
+  const now=Date.now();
+  const rows=(stations||[]).map(x=>{
+    const s=x.station||{};
+    const slat=stationNumber(s.latitude),slon=stationNumber(s.longitude);
+    const mufd=stationNumber(x.mufd),fof2=stationNumber(x.fof2),cs=stationNumber(x.cs);
+    const t=new Date(x.time||0).getTime();
+    if(slat===null||slon===null||mufd===null||!t)return null;
+    const ageMin=(now-t)/60000;
+    if(ageMin<0||ageMin>180)return null;
+    if(cs!==null&&cs!==-1&&cs<50)return null;
+    const dist=kmBetween(lat,lon,slat,slon);
+    if(dist>3200)return null;
+    const quality=(cs===null||cs===-1)?0.8:Math.max(.35,Math.min(1,cs/100));
+    const freshness=Math.max(.2,1-ageMin/240);
+    const weight=quality*freshness/(Math.pow(dist+250,1.7));
+    return {name:s.name||s.code||'GIRO',dist,mufd,fof2,cs,ageMin,weight};
+  }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
+
+  const use=rows.slice(0,6);
+  if(!use.length)return null;
+
+  const sum=use.reduce((a,x)=>a+x.weight,0);
+  const mufd=use.reduce((a,x)=>a+x.mufd*x.weight,0)/sum;
+  const frows=use.filter(x=>x.fof2!==null);
+  const fsum=frows.reduce((a,x)=>a+x.weight,0);
+  const fof2=frows.length&&fsum>0?frows.reduce((a,x)=>a+x.fof2*x.weight,0)/fsum:null;
+  return {mufd,fof2,stations:use,nearest:use[0],newestAge:Math.min(...use.map(x=>x.ageMin))};
+}
+
 async function updateMUF(){
   try{
-    const xmlText=await t(HAMQSL_MUF);
-    const doc=new DOMParser().parseFromString(xmlText,'application/xml');
-    const node=doc.querySelector('solardata > muf, muf');
-    const raw=node?.textContent?.trim()||'';
-    const match=raw.match(/([0-9]+(?:\.[0-9]+)?)/);
-    if(!match)throw new Error('MUF missing');
-    const value=Number(match[1]);
-    muf.textContent=n(value,1);
-    mufNote.textContent='MHz · King Salmon proxy';
-    paint(muf,value>=21?'good':value>=14?'warn':'ice');
-    localStorage.setItem('kl5ne_muf',JSON.stringify({t:Date.now(),value}));
+    const L=loc();
+    const stations=await j(KC2G_STATIONS);
+    const est=estimateIono(stations,L.lat,L.lon);
+    if(!est)throw new Error('No recent regional ionosondes');
+
+    muf.textContent=n(est.mufd,1);
+    const fo=est.fof2!==null?' · foF2 '+n(est.fof2,1):'';
+    const near=est.nearest?.name?(' · '+est.nearest.name):'';
+    mufNote.textContent='MHz'+fo+near;
+    paint(muf,est.mufd>=21?'good':est.mufd>=14?'warn':'ice');
+
+    localStorage.setItem('kl5ne_muf',JSON.stringify({
+      t:Date.now(),value:est.mufd,fof2:est.fof2,note:mufNote.textContent
+    }));
   }catch(err){
     const cached=JSON.parse(localStorage.getItem('kl5ne_muf')||'null');
-    if(cached&&Date.now()-cached.t<6*3600e3){
+    if(cached&&Date.now()-cached.t<3*3600e3){
       muf.textContent=n(cached.value,1);
-      mufNote.textContent='MHz · cached Alaska proxy';
+      mufNote.textContent=(cached.note||'MHz · KC2G/GIRO')+' · cached';
       paint(muf,'ice');
     }else{
       muf.textContent='--';
-      mufNote.textContent='MUF source unavailable';
+      mufNote.textContent='KC2G/GIRO regional data unavailable';
       paint(muf,'ice');
     }
   }
@@ -426,7 +469,7 @@ function init(){
   tickClock();updateSpace();updateMUF();updateWeather();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
-  setInterval(updateMUF,60*60*1000);
+  setInterval(updateMUF,15*60*1000);
   setInterval(updateWeather,10*60*1000);
 }
 window.icueEvents=window.icueEvents||{};
