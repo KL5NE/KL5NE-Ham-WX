@@ -3,7 +3,7 @@
   "id": "com.alaskahamradio.kl5ne.hamwx",
   "name": "KL5NE Ham WX",
   "description": "XENEON EDGE dashboard for NOAA space weather, Alaska MUF/HF operating conditions, and Palmer local weather.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "preview_icon": "resources/icon.svg",
   "min_app_version": "5.47",
   "min_framework_version": "1.4.0",
