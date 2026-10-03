@@ -172,11 +172,11 @@ body{padding:var(--pad)}
         <div class="wxstat windStat">
           <div class="windTop">
             <div class="windObs">
-              <div class="label">Observed Wind</div>
+              <div class="label">Wind Now</div>
               <strong id="wxWind">--</strong>
             </div>
             <div class="windForecast">
-              <div class="label">NWS Forecast Wind</div>
+              <div class="label">PAAQ Observation</div>
               <strong id="forecastWind">--</strong>
             </div>
           </div>
@@ -186,7 +186,7 @@ body{padding:var(--pad)}
           </div>
         </div>
         <div class="wxstat"><div class="label">Humidity</div><strong id="rh">--</strong></div>
-        <div class="wxstat"><div class="label">Gust</div><strong id="gust">--</strong></div>
+        <div class="wxstat"><div class="label">Gust · PAAQ</div><strong id="gust">--</strong></div>
         <div class="wxstat"><div class="label">Pressure</div><strong id="pressure">--</strong></div>
       </div>
     </div>
@@ -207,7 +207,7 @@ const NOAA={
   kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
-const KC2G_STATIONS='https://prop.kc2g.com/api/stations.json';
+const MUF_FEED='https://raw.githubusercontent.com/KL5NE/KL5NE-Ham-WX/live-data/muf.json';
 let started=false;
 
 function prop(name,fallback){
@@ -307,62 +307,17 @@ function iconSvg(desc){
   return '<svg viewBox="0 0 64 64"><path d="M16 43h32a12 12 0 0 0 0-24 17 17 0 0 0-32 6A9 9 0 0 0 16 43z"/></svg>';
 }
 
-function kmBetween(lat1,lon1,lat2,lon2){
-  const R=6371,toRad=x=>x*Math.PI/180;
-  const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-function stationNumber(v){
-  const x=Number(v);
-  return Number.isFinite(x)?x:null;
-}
-function estimateIono(stations,lat,lon){
-  const now=Date.now();
-  const rows=(stations||[]).map(x=>{
-    const s=x.station||{};
-    const slat=stationNumber(s.latitude),slon=stationNumber(s.longitude);
-    const mufd=stationNumber(x.mufd),fof2=stationNumber(x.fof2),cs=stationNumber(x.cs);
-    const t=new Date(x.time||0).getTime();
-    if(slat===null||slon===null||mufd===null||!t)return null;
-    const ageMin=(now-t)/60000;
-    if(ageMin<0||ageMin>180)return null;
-    if(cs!==null&&cs!==-1&&cs<50)return null;
-    const dist=kmBetween(lat,lon,slat,slon);
-    if(dist>3200)return null;
-    const quality=(cs===null||cs===-1)?0.8:Math.max(.35,Math.min(1,cs/100));
-    const freshness=Math.max(.2,1-ageMin/240);
-    const weight=quality*freshness/(Math.pow(dist+250,1.7));
-    return {name:s.name||s.code||'GIRO',dist,mufd,fof2,cs,ageMin,weight};
-  }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
-
-  const use=rows.slice(0,6);
-  if(!use.length)return null;
-
-  const sum=use.reduce((a,x)=>a+x.weight,0);
-  const mufd=use.reduce((a,x)=>a+x.mufd*x.weight,0)/sum;
-  const frows=use.filter(x=>x.fof2!==null);
-  const fsum=frows.reduce((a,x)=>a+x.weight,0);
-  const fof2=frows.length&&fsum>0?frows.reduce((a,x)=>a+x.fof2*x.weight,0)/fsum:null;
-  return {mufd,fof2,stations:use,nearest:use[0],newestAge:Math.min(...use.map(x=>x.ageMin))};
-}
-
 async function updateMUF(){
   try{
-    const L=loc();
-    const stations=await j(KC2G_STATIONS);
-    const est=estimateIono(stations,L.lat,L.lon);
-    if(!est)throw new Error('No recent regional ionosondes');
-
-    muf.textContent=n(est.mufd,1);
-    const fo=est.fof2!==null?' · foF2 '+n(est.fof2,1):'';
-    const near=est.nearest?.name?(' · '+est.nearest.name):'';
-    mufNote.textContent='MHz'+fo+near;
-    paint(muf,est.mufd>=21?'good':est.mufd>=14?'warn':'ice');
-
-    localStorage.setItem('kl5ne_muf',JSON.stringify({
-      t:Date.now(),value:est.mufd,fof2:est.fof2,note:mufNote.textContent
-    }));
+    const d=await j(MUF_FEED+'?t='+Date.now());
+    const mv=Number(d.muf3000_mhz),fv=Number(d.fof2_mhz);
+    if(!Number.isFinite(mv))throw new Error('MUF missing');
+    muf.textContent=n(mv,1);
+    const fo=Number.isFinite(fv)?' · foF2 '+n(fv,1):'';
+    const age=Number.isFinite(Number(d.newest_age_min))?' · '+Math.round(Number(d.newest_age_min))+'m old':'';
+    mufNote.textContent='MHz'+fo+age;
+    paint(muf,mv>=21?'good':mv>=14?'warn':'ice');
+    localStorage.setItem('kl5ne_muf',JSON.stringify({t:Date.now(),value:mv,fof2:fv,note:mufNote.textContent}));
   }catch(err){
     const cached=JSON.parse(localStorage.getItem('kl5ne_muf')||'null');
     if(cached&&Date.now()-cached.t<3*3600e3){
@@ -371,7 +326,7 @@ async function updateMUF(){
       paint(muf,'ice');
     }else{
       muf.textContent='--';
-      mufNote.textContent='KC2G/GIRO regional data unavailable';
+      mufNote.textContent='MUF live feed unavailable';
       paint(muf,'ice');
     }
   }
@@ -430,25 +385,30 @@ async function updateWeather(){
     const fcstDir=nextHour.windDirection||'';
     const fcstRange=windRangeMph(fcstSpeed);
 
-    wxWind.textContent=obsDir+' '+(obsMph??'--')+' mph';
-    forecastWind.textContent=(fcstDir?fcstDir+' ':'')+fcstSpeed;
+    const mismatch=obsMph!==null&&fcstRange.min!==null&&obsMph<=3&&fcstRange.min>=10;
+    const strongDisagree=obsMph!==null&&fcstRange.max!==null&&Math.abs(obsMph-fcstRange.max)>=15;
+    const forecastText=(fcstDir?fcstDir+' ':'')+fcstSpeed;
+    const obsText=obsDir+' '+(obsMph??'--')+' mph';
+
+    wxWind.textContent=(mismatch||strongDisagree||obsMph===null)?forecastText:obsText;
+    forecastWind.textContent=obsText;
     gust.textContent=(obsGust??'--')+' mph';
     rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
     pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
-    windAge.textContent=station+' observation · '+ageText(o.timestamp);
+    windAge.textContent='NWS point forecast · '+station+' obs '+ageText(o.timestamp);
 
     windFlag.className='windFlag';
-    if(obsMph!==null&&fcstRange.min!==null&&obsMph<=3&&fcstRange.min>=10){
-      windFlag.textContent='OBS CALM · FORECAST WINDY';
+    if(mismatch){
+      windFlag.textContent='PAAQ CALM · USING NWS';
       windFlag.classList.add('warn');
-    }else if(obsMph!==null&&fcstRange.max!==null&&Math.abs(obsMph-fcstRange.max)>=15){
-      windFlag.textContent='WIND SOURCES DISAGREE';
+    }else if(strongDisagree){
+      windFlag.textContent='SOURCES DISAGREE · USING NWS';
       windFlag.classList.add('warn');
     }else if(obsMph!==null){
-      windFlag.textContent='OBS + FORECAST';
+      windFlag.textContent='OBS + FORECAST AGREE';
       windFlag.classList.add('good');
     }else{
-      windFlag.textContent='FORECAST ONLY';
+      windFlag.textContent='NWS FORECAST';
       windFlag.classList.add('warn');
     }
     forecast.innerHTML=periods.map((p,i)=>{const pf=String(p.temperatureUnit).toUpperCase()==='F'?Number(p.temperature):cToF(Number(p.temperature));const pc=String(p.temperatureUnit).toUpperCase()==='C'?Number(p.temperature):fToC(Number(p.temperature));return '<div class="hour"><div class="hourTime">'+(i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'}))+'</div><div class="hourDesc">'+(p.shortForecast||'')+'</div><div class="hourTemp">'+Math.round(pf)+'°F / '+Math.round(pc)+'°C</div></div>';}).join('');
