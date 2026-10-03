@@ -15,107 +15,143 @@
 
 <style>
 :root{
-  --bg:#05090c; --panel:#0a1217; --panel2:#0d171d; --line:#22313a;
-  --text:#eef6f8; --muted:#8ca0aa; --good:#4ed6a8; --warn:#f4bd5d;
-  --bad:#ff6d6d; --ice:#77c9ff; --violet:#b695ff;
+  --bg:#05090c; --panel:#0a1217; --panel2:#0d171d; --tile:#081015; --line:#1f3039;
+  --text:#eef6f8; --muted:#84a0ad; --good:#42ddb0; --warn:#f6bd5b;
+  --bad:#ff7070; --ice:#6fd0ff;
+  --pad:16px; --gap:12px; --radius:18px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
-body{padding:var(--space-pad,10px)}
-.shell{height:100%;width:100%;display:grid;grid-template-columns:1.7fr .92fr;gap:var(--space-gap,10px)}
-.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;min-width:0;overflow:hidden}
-.space{display:grid;grid-template-rows:auto 1fr auto;padding:var(--panel-pad-y,12px) var(--panel-pad-x,16px)}
-.weather{display:grid;grid-template-rows:auto 1fr auto;padding:var(--panel-pad-y,12px) var(--panel-pad-x,16px)}
-.head{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
-.title{font-size:var(--fs-title,20px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.sub{font-size:var(--fs-small,12px);color:var(--muted);white-space:nowrap}
-.live{display:flex;align-items:center;gap:8px;font-size:var(--fs-small,12px);color:var(--muted)}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 10px color-mix(in srgb,var(--good) 65%, transparent)}
-.dot.stale{background:var(--warn)}
-.dot.off{background:var(--bad)}
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--space-gap,10px);align-items:stretch;padding:var(--metrics-pad,10px) 0}
-.metric{background:#081015;border:1px solid #1d2a31;border-radius:var(--radius,14px);padding:var(--metric-pad,10px);min-width:0}
-.label{font-size:var(--fs-label,11px);color:var(--muted);text-transform:uppercase;letter-spacing:.11em}
-.value{font-size:var(--fs-value,30px);font-weight:800;line-height:1.05;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)} .ice{color:var(--ice)} .violet{color:var(--violet)}
-.impact{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--space-gap,10px)}
-.impactCard{background:#071015;border:1px solid #1d2a31;border-radius:14px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.impactBig{font-size:var(--fs-impact,20px);font-weight:800}
-.bands{display:flex;gap:7px;align-items:center;flex-wrap:nowrap}
-.band{padding:var(--band-py,6px) var(--band-px,9px);border-radius:999px;background:#102027;border:1px solid #223740;font-size:var(--fs-small,12px);font-weight:700;white-space:nowrap}
-.wxMain{display:grid;grid-template-columns:1fr 1.1fr;align-items:center;gap:14px;padding:16px 0 9px}
-.temp{font-size:var(--fs-temp,64px);line-height:.92;font-weight:850;letter-spacing:-.05em}
-.condition{font-size:var(--fs-condition,17px);font-weight:700;margin-top:7px}
-.feels{font-size:var(--fs-small,12px);color:var(--muted);margin-top:3px}
-.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.wxstat{background:#081015;border:1px solid #1d2a31;border-radius:13px;padding:10px}
-.wxstat strong{display:block;font-size:19px;margin-top:3px}
+body{padding:var(--pad)}
+.dashboard{width:100%;height:100%;display:grid;grid-template-columns:minmax(0,2.18fr) minmax(420px,1fr);gap:var(--gap)}
+.panel{min-width:0;min-height:0;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.space{padding:14px 18px 14px;display:grid;grid-template-rows:auto auto 1fr;gap:12px}
+.weather{padding:14px 18px 14px;display:grid;grid-template-rows:auto 1fr auto;gap:12px}
+
+.header{display:grid;grid-template-columns:1fr auto;align-items:start;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.title{font-size:clamp(18px,1.55vw,30px);line-height:1;font-weight:850;letter-spacing:.075em;text-transform:uppercase}
+.subtitle{font-size:clamp(10px,.68vw,14px);color:var(--muted);margin-top:5px}
+.headerRight{display:flex;align-items:center;gap:16px}
+.clock{font-size:clamp(11px,.72vw,15px);color:var(--muted);white-space:nowrap;text-align:right}
+.live{display:flex;align-items:center;gap:7px;font-size:clamp(10px,.65vw,13px);color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+.dot.stale{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.dot.off{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.metric{min-width:0;height:132px;background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center}
+.label{font-size:clamp(10px,.67vw,13px);line-height:1.15;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.value{font-size:clamp(32px,2.55vw,54px);line-height:.95;font-weight:850;margin-top:8px;white-space:nowrap}
+.subvalue{font-size:clamp(9px,.6vw,12px);color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)} .ice{color:var(--ice)}
+
+.hfBlock{min-height:0;display:grid;grid-template-columns:1.25fr .8fr;gap:10px}
+.hfMain,.polarCard{background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:0}
+.hfMain{display:grid;grid-template-rows:auto auto 1fr}
+.hfHeadline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.hfStatus{font-size:clamp(24px,2vw,42px);font-weight:900;line-height:1}
+.hfNote{font-size:clamp(10px,.66vw,13px);color:var(--muted)}
+.bandRow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;align-self:end;margin-top:10px}
+.band{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:48px;border-radius:12px;background:#102028;border:1px solid #243943;padding:5px 4px;text-align:center}
+.bandName{font-size:clamp(11px,.7vw,14px);font-weight:800}
+.bandState{font-size:clamp(9px,.58vw,11px);font-weight:800;letter-spacing:.05em;margin-top:2px}
+.polarCard{display:flex;flex-direction:column;justify-content:center}
+.polarValue{font-size:clamp(28px,2.25vw,46px);font-weight:900;line-height:1;margin-top:9px}
+.noaaStamp{font-size:clamp(9px,.58vw,11px);color:var(--muted);margin-top:8px}
+
+.wxBody{min-height:0;display:grid;grid-template-columns:1.05fr 1fr;gap:12px;align-items:center}
+.wxCurrent{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.tempLine{display:flex;align-items:flex-start;gap:4px}
+.temp{font-size:clamp(64px,5.1vw,108px);font-weight:900;line-height:.83;letter-spacing:-.055em}
+.degree{font-size:clamp(24px,1.7vw,36px);font-weight:800;margin-top:7px}
+.conditionRow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.wxIcon{width:58px;height:58px;display:grid;place-items:center;flex:0 0 auto}
+.wxIcon svg{width:100%;height:100%;stroke:var(--warn);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.condition{font-size:clamp(17px,1.3vw,26px);font-weight:850;line-height:1.05}
+.feels{font-size:clamp(10px,.68vw,13px);color:var(--muted);margin-top:5px}
+.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wxstat{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:10px 11px;min-width:0}
+.wxstat strong{display:block;font-size:clamp(15px,1.08vw,22px);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .forecast{border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .hour{min-width:0}
-.hour .t{font-size:12px;color:var(--muted)}
-.hour .d{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.hour .n{font-size:18px;font-weight:800;margin-top:2px}
-.footer{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:11px;color:#60737c;letter-spacing:.05em;pointer-events:none}
-body.expanded .shell{grid-template-columns:1.85fr .95fr}
-body.expanded .metrics{gap:14px}
-body.expanded .metric{display:flex;flex-direction:column;justify-content:center}
-body.expanded .impactCard{min-height:72px}
-@media(max-width:900px){
- .shell{grid-template-columns:1fr}
- .weather{display:none}
- .metrics{grid-template-columns:repeat(5,1fr)}
- .impact{grid-template-columns:1fr}
+.hourTime{font-size:clamp(9px,.58vw,11px);text-transform:uppercase;color:var(--muted)}
+.hourDesc{font-size:clamp(10px,.67vw,13px);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.hourTemp{font-size:clamp(17px,1.3vw,25px);font-weight:900;margin-top:4px}
+
+@media(max-width:1250px){
+  :root{--pad:8px;--gap:8px}
+  .dashboard{grid-template-columns:1fr}
+  .weather{display:none}
+  .metric{height:104px;padding:9px 10px}
+  .space{padding:10px 12px}
+  .hfBlock{grid-template-columns:1fr}
+  .polarCard{display:none}
 }
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="dashboard">
   <section class="panel space">
-    <div class="head">
+    <div class="header">
       <div>
         <div class="title">KL5NE · HF SPACE WEATHER</div>
-        <div class="sub">NOAA SWPC · Alaska-focused operating view</div>
+        <div class="subtitle">NOAA SWPC · Alaska-focused operating view</div>
       </div>
-      <div class="live"><span id="spaceDot" class="dot"></span><span id="spaceState">LIVE</span></div>
+      <div class="headerRight">
+        <div id="clock" class="clock">AK --:-- · UTC --:--Z</div>
+        <div class="live"><span id="spaceDot" class="dot"></span><span id="spaceState">LIVE</span></div>
+      </div>
     </div>
 
     <div class="metrics">
-      <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value">--</div><div class="label">SFI / 10.7 cm</div></div>
-      <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="label">geomagnetic</div></div>
-      <div class="metric"><div class="label">A index</div><div id="aidx" class="value">--</div><div class="label">running A</div></div>
-      <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="label">nT · south is rough</div></div>
-      <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="label">km/s</div></div>
+      <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value ice">--</div><div class="subvalue">SFI · 10.7 cm</div></div>
+      <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="subvalue">Geomagnetic</div></div>
+      <div class="metric"><div class="label">A Index</div><div id="aidx" class="value">--</div><div class="subvalue">Running A</div></div>
+      <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="subvalue">nT · south is rough</div></div>
+      <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="subvalue">km/s</div></div>
     </div>
 
-    <div class="impact">
-      <div class="impactCard">
-        <div><div class="label">Alaska HF impact</div><div id="impact" class="impactBig">CALCULATING…</div></div>
-        <div class="bands">
-          <span id="b10" class="band">10m</span><span id="b15" class="band">15m</span><span id="b20" class="band">20m</span><span id="b40" class="band">40m</span><span id="b80" class="band">80m</span>
+    <div class="hfBlock">
+      <div class="hfMain">
+        <div class="label">HF NOW · Alaska operating conditions</div>
+        <div class="hfHeadline"><div id="impact" class="hfStatus">CALCULATING…</div><div id="hfNote" class="hfNote">Using SFI, Kp, Bz and solar wind</div></div>
+        <div class="bandRow">
+          <div id="b10" class="band"><div class="bandName">10m</div><div class="bandState">--</div></div>
+          <div id="b15" class="band"><div class="bandName">15m</div><div class="bandState">--</div></div>
+          <div id="b20" class="band"><div class="bandName">20m</div><div class="bandState">--</div></div>
+          <div id="b40" class="band"><div class="bandName">40m</div><div class="bandState">--</div></div>
+          <div id="b80" class="band"><div class="bandName">80m</div><div class="bandState">--</div></div>
         </div>
       </div>
-      <div class="impactCard">
-        <div><div class="label">Polar-path caution</div><div id="polar" class="impactBig">--</div></div>
-        <div class="sub" id="spaceAge">waiting for NOAA</div>
+      <div class="polarCard">
+        <div class="label">Polar Path</div>
+        <div id="polar" class="polarValue">--</div>
+        <div id="spaceAge" class="noaaStamp">Waiting for NOAA</div>
       </div>
     </div>
   </section>
 
   <section class="panel weather">
-    <div class="head">
+    <div class="header">
       <div>
         <div class="title" id="wxTitle">PALMER WX</div>
-        <div class="sub">National Weather Service</div>
+        <div class="subtitle">National Weather Service</div>
       </div>
       <div class="live"><span id="wxDot" class="dot"></span><span id="wxState">LIVE</span></div>
     </div>
 
-    <div class="wxMain">
-      <div>
-        <div><span id="temp" class="temp">--</span><span class="value" style="font-size:30px">°F</span></div>
-        <div id="condition" class="condition">Loading observation…</div>
-        <div id="feels" class="feels"></div>
+    <div class="wxBody">
+      <div class="wxCurrent">
+        <div class="tempLine"><div id="temp" class="temp">--</div><div class="degree">°F</div></div>
+        <div class="conditionRow">
+          <div id="wxIcon" class="wxIcon"></div>
+          <div>
+            <div id="condition" class="condition">Loading…</div>
+            <div id="feels" class="feels"></div>
+          </div>
+        </div>
       </div>
+
       <div class="wxStats">
         <div class="wxstat"><div class="label">Wind</div><strong id="wxWind">--</strong></div>
         <div class="wxstat"><div class="label">Humidity</div><strong id="rh">--</strong></div>
@@ -125,180 +161,179 @@ body.expanded .impactCard{min-height:72px}
     </div>
 
     <div id="forecast" class="forecast">
-      <div class="hour"><div class="t">NEXT</div><div class="d">Loading</div><div class="n">--</div></div>
-      <div class="hour"><div class="t">LATER</div><div class="d">Loading</div><div class="n">--</div></div>
-      <div class="hour"><div class="t">AFTER</div><div class="d">Loading</div><div class="n">--</div></div>
+      <div class="hour"><div class="hourTime">NEXT</div><div class="hourDesc">Loading</div><div class="hourTemp">--</div></div>
+      <div class="hour"><div class="hourTime">LATER</div><div class="hourDesc">Loading</div><div class="hourTemp">--</div></div>
+      <div class="hour"><div class="hourTime">AFTER</div><div class="hourDesc">Loading</div><div class="hourTemp">--</div></div>
     </div>
   </section>
 </div>
-<div class="footer" id="clock"></div>
 
 <script>
-const NOAA = {
- flux:'https://services.swpc.noaa.gov/products/summary/10cm-flux.json',
- mag:'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
- wind:'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
- kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
+const NOAA={
+  flux:'https://services.swpc.noaa.gov/products/summary/10cm-flux.json',
+  mag:'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
+  wind:'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
+  kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
 };
-const FALLBACK = {label:'Palmer, Alaska', lat:61.5997, lon:-149.1128};
+const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
+let started=false;
 
-function prop(name, fallback){
+function prop(name,fallback){
   try{
-    if(typeof window!=='undefined' && window[name]!==undefined && window[name]!==null && window[name]!=='') return window[name];
-    const v=Function('return typeof '+name+' !== "undefined" ? '+name+' : undefined')();
-    return (v!==undefined && v!==null && v!=='')?v:fallback;
+    if(window[name]!==undefined&&window[name]!==null&&window[name]!=='') return window[name];
+    return fallback;
   }catch(e){return fallback}
 }
 function loc(){
-  const la=parseFloat(prop('latitude',FALLBACK.lat)), lo=parseFloat(prop('longitude',FALLBACK.lon));
+  const la=parseFloat(prop('latitude',FALLBACK.lat)),lo=parseFloat(prop('longitude',FALLBACK.lon));
   return {label:String(prop('locationLabel',FALLBACK.label)),lat:Number.isFinite(la)?la:FALLBACK.lat,lon:Number.isFinite(lo)?lo:FALLBACK.lon};
 }
 function n(v,d=0){return Number.isFinite(Number(v))?Number(v).toFixed(d):'--'}
 function cToF(c){return Number.isFinite(c)?Math.round(c*9/5+32):null}
 function msToMph(x){return Number.isFinite(x)?Math.round(x*2.23694):null}
 function paToInHg(x){return Number.isFinite(x)?(x/3386.389).toFixed(2):null}
-function setQuality(dot,state,ageMs){
-  dot.className='dot '+(ageMs>25*60*1000?'stale':'');
-  state.textContent=ageMs>25*60*1000?'STALE':'LIVE';
-}
-async function j(url){
-  const r=await fetch(url,{cache:'no-store'});
-  if(!r.ok) throw new Error(r.status);
-  return r.json();
-}
-function cls(el, kind){el.classList.remove('good','warn','bad','ice','violet'); if(kind)el.classList.add(kind)}
+async function j(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+function paint(el,kind){el.classList.remove('good','warn','bad','ice');if(kind)el.classList.add(kind)}
+function quality(dot,state,age){dot.className='dot '+(age>25*60*1000?'stale':'');state.textContent=age>25*60*1000?'STALE':'LIVE'}
 function kpClass(k){return k>=5?'bad':k>=4?'warn':'good'}
 function bzClass(b){return b<=-8?'bad':b<=-4?'warn':'good'}
 function windClass(w){return w>=650?'bad':w>=500?'warn':'good'}
 function fluxClass(f){return f>=150?'good':f>=100?'warn':'ice'}
 
+function bandLevel(name,sfi,kp,bz,wind){
+  let disturbance=0;
+  if(kp>=5)disturbance+=3;else if(kp>=4)disturbance+=2;else if(kp>=3)disturbance+=1;
+  if(bz<=-8)disturbance+=2;else if(bz<=-4)disturbance+=1;
+  if(wind>=650)disturbance+=2;else if(wind>=500)disturbance+=1;
+
+  if(name==='10m'){
+    if(disturbance>=4||sfi<90)return ['POOR','bad'];
+    if(sfi>=145&&disturbance<=1)return ['GOOD','good'];
+    return ['FAIR','warn'];
+  }
+  if(name==='15m'){
+    if(disturbance>=4||sfi<80)return ['POOR','bad'];
+    if(sfi>=115&&disturbance<=2)return ['GOOD','good'];
+    return ['FAIR','warn'];
+  }
+  if(name==='20m'){
+    if(disturbance>=5)return ['POOR','bad'];
+    if(disturbance<=2)return ['GOOD','good'];
+    return ['FAIR','warn'];
+  }
+  if(name==='40m'){
+    if(kp>=6)return ['POOR','bad'];
+    if(disturbance<=3)return ['GOOD','good'];
+    return ['FAIR','warn'];
+  }
+  if(name==='80m'){
+    if(kp>=6)return ['POOR','bad'];
+    if(kp<=3)return ['GOOD','good'];
+    return ['FAIR','warn'];
+  }
+  return ['--',''];
+}
+
 function evaluateHF(sfi,kp,bz,wind){
   let penalty=0;
-  if(kp>=5) penalty+=3; else if(kp>=4) penalty+=2; else if(kp>=3) penalty+=1;
-  if(bz<=-8) penalty+=2; else if(bz<=-4) penalty+=1;
-  if(wind>=650) penalty+=2; else if(wind>=500) penalty+=1;
-  let text='QUIET / FAVORABLE', kind='good';
-  if(penalty>=4){text='DISTURBED',kind='bad'} else if(penalty>=2){text='WATCH',kind='warn'}
-  const polar = penalty>=4?'HIGH':penalty>=2?'MODERATE':'LOW';
-  const polarKind = penalty>=4?'bad':penalty>=2?'warn':'good';
-  const s = Number.isFinite(sfi)?sfi:100;
-  const high = s>=145?'good':s>=105?'warn':'ice';
-  const mid = penalty>=4?'bad':penalty>=2?'warn':'good';
-  return {text,kind,polar,polarKind,bands:{b10:high,b15:high,b20:mid,b40:mid,b80:kp>=5?'bad':kp>=4?'warn':'good'}};
+  if(kp>=5)penalty+=3;else if(kp>=4)penalty+=2;else if(kp>=3)penalty+=1;
+  if(bz<=-8)penalty+=2;else if(bz<=-4)penalty+=1;
+  if(wind>=650)penalty+=2;else if(wind>=500)penalty+=1;
+  let text='QUIET / FAVORABLE',kind='good';
+  if(penalty>=4){text='DISTURBED',kind='bad'}else if(penalty>=2){text='WATCH',kind='warn'}
+  const polar=penalty>=4?'HIGH RISK':penalty>=2?'WATCH':'LOW RISK';
+  const polarKind=penalty>=4?'bad':penalty>=2?'warn':'good';
+  return {text,kind,polar,polarKind};
+}
+
+function setBand(id,name,sfi,kp,bz,wind){
+  const el=document.getElementById(id),state=el.querySelector('.bandState');
+  const [txt,kind]=bandLevel(name,sfi,kp,bz,wind);
+  state.textContent=txt;paint(el,kind);paint(state,kind);
+}
+
+function iconSvg(desc){
+  const s=(desc||'').toLowerCase();
+  if(s.includes('snow')) return '<svg viewBox="0 0 64 64"><path d="M32 8v48M12 20l40 24M52 20L12 44M24 12l8 8 8-8M24 52l8-8 8 8M10 30l10 2-4 9M54 30l-10 2 4 9"/></svg>';
+  if(s.includes('rain')||s.includes('shower')) return '<svg viewBox="0 0 64 64"><path d="M18 38h29a11 11 0 0 0 0-22 16 16 0 0 0-30 6A9 9 0 0 0 18 38z"/><path d="M22 46l-4 8M34 46l-4 8M46 46l-4 8"/></svg>';
+  if(s.includes('cloud')||s.includes('overcast')) return '<svg viewBox="0 0 64 64"><path d="M16 43h32a12 12 0 0 0 0-24 17 17 0 0 0-32 6A9 9 0 0 0 16 43z"/></svg>';
+  if(s.includes('clear')||s.includes('sun')) return '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="11"/><path d="M32 6v10M32 48v10M6 32h10M48 32h10M14 14l7 7M43 43l7 7M50 14l-7 7M21 43l-7 7"/></svg>';
+  return '<svg viewBox="0 0 64 64"><path d="M16 43h32a12 12 0 0 0 0-24 17 17 0 0 0-32 6A9 9 0 0 0 16 43z"/></svg>';
 }
 
 async function updateSpace(){
   try{
     const [flux,mag,sw,kps]=await Promise.all([j(NOAA.flux),j(NOAA.mag),j(NOAA.wind),j(NOAA.kp)]);
-    const f=Number(flux?.[0]?.flux);
-    const m=mag?.[0]||{}, w=sw?.[0]||{}, last=(kps||[]).at(-1)||{};
-    const k=Number(last.Kp), a=Number(last.a_running), bzv=Number(m.bz_gsm), speed=Number(w.proton_speed);
-    sfi.textContent=n(f,0); kp.textContent=n(k,2); aidx.textContent=n(a,0); bz.textContent=(bzv>0?'+':'')+n(bzv,1); wind.textContent=n(speed,0);
-    cls(sfi,fluxClass(f)); cls(kp,kpClass(k)); cls(aidx,a>=30?'bad':a>=20?'warn':'good'); cls(bz,bzClass(bzv)); cls(wind,windClass(speed));
-    kpNote.textContent=k>=5?'storm level':k>=4?'active':'geomagnetic';
-    const e=evaluateHF(f,k,bzv,speed); impact.textContent=e.text; cls(impact,e.kind); polar.textContent=e.polar; cls(polar,e.polarKind);
-    Object.entries(e.bands).forEach(([id,knd])=>{const x=document.getElementById(id);cls(x,knd)});
+    const f=Number(flux?.[0]?.flux),m=mag?.[0]||{},w=sw?.[0]||{},last=(kps||[]).at(-1)||{};
+    const k=Number(last.Kp),a=Number(last.a_running),bzv=Number(m.bz_gsm),speed=Number(w.proton_speed);
+
+    sfi.textContent=n(f);kp.textContent=n(k,2);aidx.textContent=n(a);bz.textContent=(bzv>0?'+':'')+n(bzv,1);wind.textContent=n(speed);
+    paint(sfi,fluxClass(f));paint(kp,kpClass(k));paint(aidx,a>=30?'bad':a>=20?'warn':'good');paint(bz,bzClass(bzv));paint(wind,windClass(speed));
+    kpNote.textContent=k>=5?'Storm level':k>=4?'Active':'Geomagnetic';
+
+    const e=evaluateHF(f,k,bzv,speed);
+    impact.textContent=e.text;paint(impact,e.kind);
+    polar.textContent=e.polar;paint(polar,e.polarKind);
+    setBand('b10','10m',f,k,bzv,speed);setBand('b15','15m',f,k,bzv,speed);setBand('b20','20m',f,k,bzv,speed);setBand('b40','40m',f,k,bzv,speed);setBand('b80','80m',f,k,bzv,speed);
+
     const newest=[flux?.[0]?.time_tag,m.time_tag,w.time_tag,last.time_tag].filter(Boolean).map(x=>new Date(x).getTime()).sort((a,b)=>b-a)[0]||Date.now();
-    setQuality(spaceDot,spaceState,Date.now()-newest);
-    spaceAge.textContent='NOAA '+new Date(newest).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' local';
-    localStorage.setItem('kl5ne_space',JSON.stringify({t:Date.now(),f,k,a,bzv,speed,newest}));
+    quality(spaceDot,spaceState,Date.now()-newest);
+    spaceAge.textContent='NOAA updated '+new Date(newest).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('kl5ne_space_v03',JSON.stringify({t:Date.now(),f,k,a,bzv,speed,newest}));
   }catch(err){
-    const c=JSON.parse(localStorage.getItem('kl5ne_space')||'null');
-    if(c){
-      sfi.textContent=n(c.f);kp.textContent=n(c.k,2);aidx.textContent=n(c.a);bz.textContent=(c.bzv>0?'+':'')+n(c.bzv,1);wind.textContent=n(c.speed);
-      spaceDot.className='dot stale';spaceState.textContent='CACHED';spaceAge.textContent='NOAA unavailable · last good data';
-    }else{spaceDot.className='dot off';spaceState.textContent='OFFLINE';spaceAge.textContent='NOAA unavailable'}
+    spaceDot.className='dot off';spaceState.textContent='OFFLINE';spaceAge.textContent='NOAA unavailable';
   }
 }
 
 async function updateWeather(){
-  const L=loc(); wxTitle.textContent=(L.label||'LOCAL').toUpperCase().replace(', ALASKA','')+' WX';
+  const L=loc();wxTitle.textContent=(L.label||'LOCAL').toUpperCase().replace(', ALASKA','')+' WX';
   try{
     let point=JSON.parse(localStorage.getItem('kl5ne_nws_point')||'null');
-    if(!point || Date.now()-point.t>12*3600e3 || point.lat!==L.lat || point.lon!==L.lon){
-      const p=await j(`https://api.weather.gov/points/${L.lat},${L.lon}`);
+    if(!point||Date.now()-point.t>12*3600e3||point.lat!==L.lat||point.lon!==L.lon){
+      const p=await j('https://api.weather.gov/points/'+L.lat+','+L.lon);
       point={t:Date.now(),lat:L.lat,lon:L.lon,forecastHourly:p.properties.forecastHourly,stations:p.properties.observationStations};
       localStorage.setItem('kl5ne_nws_point',JSON.stringify(point));
     }
     const [stations,hourly]=await Promise.all([j(point.stations),j(point.forecastHourly)]);
     const station=stations?.features?.[0]?.properties?.stationIdentifier;
-    if(!station) throw new Error('No station');
-    const obs=await j(`https://api.weather.gov/stations/${station}/observations/latest`);
-    const o=obs.properties||{};
-    const tc=Number(o.temperature?.value), wc=Number(o.windChill?.value), hc=Number(o.heatIndex?.value);
-    const tf=cToF(tc), feel=cToF(Number.isFinite(wc)?wc:Number.isFinite(hc)?hc:tc);
-    temp.textContent=tf??'--'; condition.textContent=o.textDescription||'Current conditions';
-    feels.textContent=feel!==null && feel!==tf?`Feels like ${feel}°F · station ${station}`:`Station ${station}`;
+    if(!station)throw new Error('No station');
+    const obs=await j('https://api.weather.gov/stations/'+station+'/observations/latest');
+    const o=obs.properties||{},tc=Number(o.temperature?.value),wc=Number(o.windChill?.value),hc=Number(o.heatIndex?.value);
+    const tf=cToF(tc),feel=cToF(Number.isFinite(wc)?wc:Number.isFinite(hc)?hc:tc);
+    const desc=o.textDescription||'Current conditions';
+
+    temp.textContent=tf??'--';condition.textContent=desc;wxIcon.innerHTML=iconSvg(desc);
+    feels.textContent=feel!==null&&feel!==tf?'Feels like '+feel+'°F · '+station:'Station '+station;
     wxWind.textContent=(o.windDirection?.value!=null?Math.round(o.windDirection.value)+'° ':'')+(msToMph(Number(o.windSpeed?.value))??'--')+' mph';
     gust.textContent=(msToMph(Number(o.windGust?.value))??'--')+' mph';
     rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
     pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
+
     const periods=(hourly?.properties?.periods||[]).slice(0,3);
-    forecast.innerHTML=periods.map((p,i)=>`<div class="hour"><div class="t">${i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'})}</div><div class="d">${p.shortForecast||''}</div><div class="n">${p.temperature}°${p.temperatureUnit}</div></div>`).join('');
-    const obsTime=new Date(o.timestamp||Date.now()).getTime(); setQuality(wxDot,wxState,Date.now()-obsTime);
-    localStorage.setItem('kl5ne_weather',JSON.stringify({t:Date.now(),tf,feel,condition:o.textDescription,station,wind:wxWind.textContent,gust:gust.textContent,rh:rh.textContent,pressure:pressure.textContent,forecast:periods}));
+    forecast.innerHTML=periods.map((p,i)=>'<div class="hour"><div class="hourTime">'+(i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'}))+'</div><div class="hourDesc">'+(p.shortForecast||'')+'</div><div class="hourTemp">'+p.temperature+'°'+p.temperatureUnit+'</div></div>').join('');
+    quality(wxDot,wxState,Date.now()-new Date(o.timestamp||Date.now()).getTime());
   }catch(err){
-    const c=JSON.parse(localStorage.getItem('kl5ne_weather')||'null');
-    if(c){
-      temp.textContent=c.tf??'--';condition.textContent=c.condition||'Cached conditions';feels.textContent='Cached · station '+(c.station||'');
-      wxWind.textContent=c.wind||'--';gust.textContent=c.gust||'--';rh.textContent=c.rh||'--';pressure.textContent=c.pressure||'--';
-      wxDot.className='dot stale';wxState.textContent='CACHED';
-      if(c.forecast) forecast.innerHTML=c.forecast.slice(0,3).map((p,i)=>`<div class="hour"><div class="t">${i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'})}</div><div class="d">${p.shortForecast||''}</div><div class="n">${p.temperature}°${p.temperatureUnit}</div></div>`).join('');
-    }else{wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable'}
+    wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable';wxIcon.innerHTML=iconSvg('cloud');
   }
 }
+
 function tickClock(){
   const d=new Date();
-  const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const utc=d.toLocaleTimeString([],{timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false});
-  clock.textContent=`AK/local ${local}   ·   UTC ${utc}Z`;
+  clock.textContent='AK '+local+' · UTC '+utc+'Z';
 }
-function applyResponsiveTokens(){
-  const w=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0);
-  const h=Math.max(document.documentElement.clientHeight||0,window.innerHeight||0);
-  const shortEdge=Math.min(w,h);
-  const areaEdge=Math.sqrt(Math.max(1,w*h));
-  const base=shortEdge*0.68+areaEdge*0.32;
-  const root=document.documentElement.style;
-  const clamp=(min,v,max)=>Math.max(min,Math.min(max,v));
-  root.setProperty('--fs-title',clamp(16,base*0.055,34)+'px');
-  root.setProperty('--fs-small',clamp(11,base*0.026,18)+'px');
-  root.setProperty('--fs-label',clamp(10,base*0.023,16)+'px');
-  root.setProperty('--fs-value',clamp(24,base*0.085,52)+'px');
-  root.setProperty('--fs-impact',clamp(18,base*0.052,32)+'px');
-  root.setProperty('--fs-temp',clamp(48,base*0.17,108)+'px');
-  root.setProperty('--fs-condition',clamp(15,base*0.04,25)+'px');
-  root.setProperty('--space-pad',clamp(6,base*0.018,18)+'px');
-  root.setProperty('--space-gap',clamp(6,base*0.018,18)+'px');
-  root.setProperty('--panel-pad-y',clamp(9,base*0.025,22)+'px');
-  root.setProperty('--panel-pad-x',clamp(11,base*0.035,28)+'px');
-  root.setProperty('--metric-pad',clamp(8,base*0.024,20)+'px');
-  root.setProperty('--metrics-pad',clamp(8,base*0.022,18)+'px');
-  root.setProperty('--radius',clamp(10,base*0.03,22)+'px');
-  root.setProperty('--band-py',clamp(4,base*0.012,10)+'px');
-  root.setProperty('--band-px',clamp(6,base*0.02,14)+'px');
-  document.body.classList.toggle('expanded',w>=1200 && h>=360);
-}
-
 function init(){
-  applyResponsiveTokens();
-  new ResizeObserver(applyResponsiveTokens).observe(document.documentElement);
-  window.addEventListener('resize',applyResponsiveTokens);
+  if(started)return;started=true;
   tickClock();updateSpace();updateWeather();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
   setInterval(updateWeather,10*60*1000);
 }
-
-window.icueEvents = window.icueEvents || {};
-window.icueEvents.onDataUpdated = function(){ updateWeather(); };
-window.icueEvents.onICUEInitialized = function(){ init(); };
-
-if(typeof iCUE_initialized!=='undefined' && iCUE_initialized){
-  init();
-}else{
-  init();
-}
+window.icueEvents=window.icueEvents||{};
+window.icueEvents.onDataUpdated=()=>updateWeather();
+window.icueEvents.onICUEInitialized=init;
+init();
 </script>
 </body>
 </html>
