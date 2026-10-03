@@ -142,7 +142,7 @@ body{padding:var(--pad)}
 
     <div class="wxBody">
       <div class="wxCurrent">
-        <div class="tempLine"><div id="temp" class="temp">--</div><div class="degree">°F</div></div>
+        <div class="tempLine"><div id="temp" class="temp">--</div><div id="tempUnits" class="degree">°F / --°C</div></div>
         <div class="conditionRow">
           <div id="wxIcon" class="wxIcon"></div>
           <div>
@@ -190,6 +190,7 @@ function loc(){
 }
 function n(v,d=0){return Number.isFinite(Number(v))?Number(v).toFixed(d):'--'}
 function cToF(c){return Number.isFinite(c)?Math.round(c*9/5+32):null}
+function fToC(f){return Number.isFinite(f)?Math.round((f-32)*5/9):null}
 function msToMph(x){return Number.isFinite(x)?Math.round(x*2.23694):null}
 function paToInHg(x){return Number.isFinite(x)?(x/3386.389).toFixed(2):null}
 async function j(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
@@ -302,15 +303,15 @@ async function updateWeather(){
     const tf=cToF(tc),feel=cToF(Number.isFinite(wc)?wc:Number.isFinite(hc)?hc:tc);
     const desc=o.textDescription||'Current conditions';
 
-    temp.textContent=tf??'--';condition.textContent=desc;wxIcon.innerHTML=iconSvg(desc);
-    feels.textContent=feel!==null&&feel!==tf?'Feels like '+feel+'°F · '+station:'Station '+station;
+    temp.textContent=tf??'--';tempUnits.textContent=tf!==null?'°F / '+fToC(tf)+'°C':'°F / --°C';condition.textContent=desc;wxIcon.innerHTML=iconSvg(desc);
+    feels.textContent=feel!==null&&feel!==tf?'Feels like '+feel+'°F / '+fToC(feel)+'°C · '+station:'Station '+station;
     wxWind.textContent=(o.windDirection?.value!=null?Math.round(o.windDirection.value)+'° ':'')+(msToMph(Number(o.windSpeed?.value))??'--')+' mph';
     gust.textContent=(msToMph(Number(o.windGust?.value))??'--')+' mph';
     rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
     pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
 
     const periods=(hourly?.properties?.periods||[]).slice(0,3);
-    forecast.innerHTML=periods.map((p,i)=>'<div class="hour"><div class="hourTime">'+(i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'}))+'</div><div class="hourDesc">'+(p.shortForecast||'')+'</div><div class="hourTemp">'+p.temperature+'°'+p.temperatureUnit+'</div></div>').join('');
+    forecast.innerHTML=periods.map((p,i)=>{const pf=String(p.temperatureUnit).toUpperCase()==='F'?Number(p.temperature):cToF(Number(p.temperature));const pc=String(p.temperatureUnit).toUpperCase()==='C'?Number(p.temperature):fToC(Number(p.temperature));return '<div class="hour"><div class="hourTime">'+(i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'}))+'</div><div class="hourDesc">'+(p.shortForecast||'')+'</div><div class="hourTemp">'+Math.round(pf)+'°F / '+Math.round(pc)+'°C</div></div>';}).join('');
     quality(wxDot,wxState,Date.now()-new Date(o.timestamp||Date.now()).getTime());
   }catch(err){
     wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable';wxIcon.innerHTML=iconSvg('cloud');
