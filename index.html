@@ -71,11 +71,19 @@ body{padding:var(--pad)}
 .wxIcon svg{width:100%;height:100%;stroke:var(--warn);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
 .condition{font-size:clamp(20px,1.45vw,29px);font-weight:850;line-height:1.05}
 .feels{font-size:clamp(12px,.82vw,16px);color:var(--muted);margin-top:7px}
-.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wxStats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .wxstat{background:var(--tile);border:1px solid var(--line);border-radius:13px;padding:15px 14px;min-width:0;min-height:88px;display:flex;flex-direction:column;justify-content:center}
-.wxstat strong{display:block;font-size:clamp(20px,1.42vw,29px);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wxstat.windStat{border-color:#31505e;background:#0c1a21}
-.wxstat.windStat strong{font-size:clamp(22px,1.55vw,32px)}
+.wxstat strong{display:block;font-size:clamp(19px,1.32vw,27px);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxstat.windStat{grid-column:1 / -1;border-color:#31505e;background:#0c1a21;min-height:128px;padding:15px 17px}
+.windTop{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.windObs strong{font-size:clamp(25px,1.8vw,37px);margin-top:6px}
+.windForecast{text-align:right;min-width:0}
+.windForecast strong{font-size:clamp(20px,1.4vw,29px);margin-top:6px}
+.windMeta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:9px;border-top:1px solid #21363f;font-size:clamp(10px,.72vw,14px);color:var(--muted)}
+.windFlag{font-weight:900;letter-spacing:.045em;white-space:nowrap}
+.windFlag.warn{color:var(--warn)}
+.windFlag.bad{color:var(--bad)}
+.windFlag.good{color:var(--good)}
 .forecast{border-top:1px solid var(--line);padding-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .hour{min-width:0;background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:11px 12px;min-height:100px;display:flex;flex-direction:column;justify-content:center}
 .hourTime{font-size:clamp(11px,.74vw,14px);font-weight:800;text-transform:uppercase;color:var(--muted)}
@@ -161,7 +169,22 @@ body{padding:var(--pad)}
       </div>
 
       <div class="wxStats">
-        <div class="wxstat windStat"><div class="label">Wind</div><strong id="wxWind">--</strong></div>
+        <div class="wxstat windStat">
+          <div class="windTop">
+            <div class="windObs">
+              <div class="label">Observed Wind</div>
+              <strong id="wxWind">--</strong>
+            </div>
+            <div class="windForecast">
+              <div class="label">NWS Forecast Wind</div>
+              <strong id="forecastWind">--</strong>
+            </div>
+          </div>
+          <div class="windMeta">
+            <span id="windAge">Waiting for observation</span>
+            <span id="windFlag" class="windFlag">--</span>
+          </div>
+        </div>
         <div class="wxstat"><div class="label">Humidity</div><strong id="rh">--</strong></div>
         <div class="wxstat"><div class="label">Gust</div><strong id="gust">--</strong></div>
         <div class="wxstat"><div class="label">Pressure</div><strong id="pressure">--</strong></div>
@@ -202,6 +225,18 @@ function cToF(c){return Number.isFinite(c)?Math.round(c*9/5+32):null}
 function fToC(f){return Number.isFinite(f)?Math.round((f-32)*5/9):null}
 function msToMph(x){return Number.isFinite(x)?Math.round(x*2.23694):null}
 function paToInHg(x){return Number.isFinite(x)?(x/3386.389).toFixed(2):null}
+function windRangeMph(s){
+  const nums=String(s||'').match(/\d+(?:\.\d+)?/g)||[];
+  const vals=nums.map(Number).filter(Number.isFinite);
+  return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:null,max:null};
+}
+function ageText(ts){
+  const mins=Math.max(0,Math.round((Date.now()-new Date(ts||Date.now()).getTime())/60000));
+  if(mins<2)return 'just now';
+  if(mins<60)return mins+' min ago';
+  const hrs=Math.round(mins/60);
+  return hrs+' hr'+(hrs===1?'':'s')+' ago';
+}
 async function j(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
 async function t(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text()}
 function paint(el,kind){el.classList.remove('good','warn','bad','ice');if(kind)el.classList.add(kind)}
@@ -342,16 +377,41 @@ async function updateWeather(){
 
     temp.textContent=tf??'--';tempUnits.textContent=tf!==null?'°F / '+fToC(tf)+'°C':'°F / --°C';condition.textContent=desc;wxIcon.innerHTML=iconSvg(desc);
     feels.textContent=feel!==null&&feel!==tf?'Feels like '+feel+'°F / '+fToC(feel)+'°C · '+station:'Station '+station;
-    wxWind.textContent=(o.windDirection?.value!=null?Math.round(o.windDirection.value)+'° ':'')+(msToMph(Number(o.windSpeed?.value))??'--')+' mph';
-    gust.textContent=(msToMph(Number(o.windGust?.value))??'--')+' mph';
-    rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
-    pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
 
     const periods=(hourly?.properties?.periods||[]).slice(0,3);
+    const nextHour=periods[0]||{};
+    const obsMph=msToMph(Number(o.windSpeed?.value));
+    const obsGust=msToMph(Number(o.windGust?.value));
+    const obsDir=o.windDirection?.value!=null?Math.round(o.windDirection.value)+'°':'--';
+    const fcstSpeed=nextHour.windSpeed||'--';
+    const fcstDir=nextHour.windDirection||'';
+    const fcstRange=windRangeMph(fcstSpeed);
+
+    wxWind.textContent=obsDir+' '+(obsMph??'--')+' mph';
+    forecastWind.textContent=(fcstDir?fcstDir+' ':'')+fcstSpeed;
+    gust.textContent=(obsGust??'--')+' mph';
+    rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
+    pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
+    windAge.textContent=station+' observation · '+ageText(o.timestamp);
+
+    windFlag.className='windFlag';
+    if(obsMph!==null&&fcstRange.min!==null&&obsMph<=3&&fcstRange.min>=10){
+      windFlag.textContent='OBS CALM · FORECAST WINDY';
+      windFlag.classList.add('warn');
+    }else if(obsMph!==null&&fcstRange.max!==null&&Math.abs(obsMph-fcstRange.max)>=15){
+      windFlag.textContent='WIND SOURCES DISAGREE';
+      windFlag.classList.add('warn');
+    }else if(obsMph!==null){
+      windFlag.textContent='OBS + FORECAST';
+      windFlag.classList.add('good');
+    }else{
+      windFlag.textContent='FORECAST ONLY';
+      windFlag.classList.add('warn');
+    }
     forecast.innerHTML=periods.map((p,i)=>{const pf=String(p.temperatureUnit).toUpperCase()==='F'?Number(p.temperature):cToF(Number(p.temperature));const pc=String(p.temperatureUnit).toUpperCase()==='C'?Number(p.temperature):fToC(Number(p.temperature));return '<div class="hour"><div class="hourTime">'+(i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'}))+'</div><div class="hourDesc">'+(p.shortForecast||'')+'</div><div class="hourTemp">'+Math.round(pf)+'°F / '+Math.round(pc)+'°C</div></div>';}).join('');
     quality(wxDot,wxState,Date.now()-new Date(o.timestamp||Date.now()).getTime());
   }catch(err){
-    wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable';wxIcon.innerHTML=iconSvg('cloud');
+    wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable';wxIcon.innerHTML=iconSvg('cloud');forecastWind.textContent='--';windAge.textContent='Weather data unavailable';windFlag.textContent='--';
   }
 }
 
