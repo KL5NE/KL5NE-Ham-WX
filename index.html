@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KL5NE Ham WX</title>
+<link rel="icon" type="image/svg+xml" href="resources/icon.svg" />
+
+<meta name="x-icue-property" content="locationLabel" data-label="Location" data-type="textfield" data-default="'Palmer, Alaska'" />
+<meta name="x-icue-property" content="latitude" data-label="Latitude" data-type="textfield" data-default="'61.5997'" />
+<meta name="x-icue-property" content="longitude" data-label="Longitude" data-type="textfield" data-default="'-149.1128'" />
+<script type="application/json" id="x-icue-groups">
+[{"title":"Weather Location","properties":["locationLabel","latitude","longitude"]}]
+</script>
+
+<style>
+:root{
+  --bg:#05090c; --panel:#0a1217; --panel2:#0d171d; --line:#22313a;
+  --text:#eef6f8; --muted:#8ca0aa; --good:#4ed6a8; --warn:#f4bd5d;
+  --bad:#ff6d6d; --ice:#77c9ff; --violet:#b695ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
+body{padding:14px}
+.shell{height:100%;display:grid;grid-template-columns:1.7fr .92fr;gap:14px}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;min-width:0;overflow:hidden}
+.space{display:grid;grid-template-rows:auto 1fr auto;padding:17px 20px 14px}
+.weather{display:grid;grid-template-rows:auto 1fr auto;padding:17px 20px 14px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.title{font-size:23px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.sub{font-size:13px;color:var(--muted);white-space:nowrap}
+.live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 10px color-mix(in srgb,var(--good) 65%, transparent)}
+.dot.stale{background:var(--warn)}
+.dot.off{background:var(--bad)}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:stretch;padding:13px 0 10px}
+.metric{background:#081015;border:1px solid #1d2a31;border-radius:14px;padding:11px 12px;min-width:0}
+.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.11em}
+.value{font-size:34px;font-weight:800;line-height:1.05;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)} .ice{color:var(--ice)} .violet{color:var(--violet)}
+.impact{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.impactCard{background:#071015;border:1px solid #1d2a31;border-radius:14px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.impactBig{font-size:22px;font-weight:800}
+.bands{display:flex;gap:7px;align-items:center;flex-wrap:nowrap}
+.band{padding:7px 10px;border-radius:999px;background:#102027;border:1px solid #223740;font-size:13px;font-weight:700;white-space:nowrap}
+.wxMain{display:grid;grid-template-columns:1fr 1.1fr;align-items:center;gap:14px;padding:16px 0 9px}
+.temp{font-size:72px;line-height:.92;font-weight:850;letter-spacing:-.05em}
+.condition{font-size:18px;font-weight:700;margin-top:7px}
+.feels{font-size:13px;color:var(--muted);margin-top:3px}
+.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.wxstat{background:#081015;border:1px solid #1d2a31;border-radius:13px;padding:10px}
+.wxstat strong{display:block;font-size:19px;margin-top:3px}
+.forecast{border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hour{min-width:0}
+.hour .t{font-size:12px;color:var(--muted)}
+.hour .d{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.hour .n{font-size:18px;font-weight:800;margin-top:2px}
+.footer{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:11px;color:#60737c;letter-spacing:.05em;pointer-events:none}
+@media(max-width:1100px){
+ body{padding:8px}.shell{gap:8px}.space,.weather{padding:10px 12px}.title{font-size:17px}.value{font-size:25px}.temp{font-size:50px}.label{font-size:10px}.metric{padding:8px}.bands{gap:4px}.band{padding:5px 6px;font-size:10px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <section class="panel space">
+    <div class="head">
+      <div>
+        <div class="title">KL5NE · HF SPACE WEATHER</div>
+        <div class="sub">NOAA SWPC · Alaska-focused operating view</div>
+      </div>
+      <div class="live"><span id="spaceDot" class="dot"></span><span id="spaceState">LIVE</span></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value">--</div><div class="label">SFI / 10.7 cm</div></div>
+      <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="label">geomagnetic</div></div>
+      <div class="metric"><div class="label">A index</div><div id="aidx" class="value">--</div><div class="label">running A</div></div>
+      <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="label">nT · south is rough</div></div>
+      <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="label">km/s</div></div>
+    </div>
+
+    <div class="impact">
+      <div class="impactCard">
+        <div><div class="label">Alaska HF impact</div><div id="impact" class="impactBig">CALCULATING…</div></div>
+        <div class="bands">
+          <span id="b10" class="band">10m</span><span id="b15" class="band">15m</span><span id="b20" class="band">20m</span><span id="b40" class="band">40m</span><span id="b80" class="band">80m</span>
+        </div>
+      </div>
+      <div class="impactCard">
+        <div><div class="label">Polar-path caution</div><div id="polar" class="impactBig">--</div></div>
+        <div class="sub" id="spaceAge">waiting for NOAA</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel weather">
+    <div class="head">
+      <div>
+        <div class="title" id="wxTitle">PALMER WX</div>
+        <div class="sub">National Weather Service</div>
+      </div>
+      <div class="live"><span id="wxDot" class="dot"></span><span id="wxState">LIVE</span></div>
+    </div>
+
+    <div class="wxMain">
+      <div>
+        <div><span id="temp" class="temp">--</span><span class="value" style="font-size:30px">°F</span></div>
+        <div id="condition" class="condition">Loading observation…</div>
+        <div id="feels" class="feels"></div>
+      </div>
+      <div class="wxStats">
+        <div class="wxstat"><div class="label">Wind</div><strong id="wxWind">--</strong></div>
+        <div class="wxstat"><div class="label">Humidity</div><strong id="rh">--</strong></div>
+        <div class="wxstat"><div class="label">Gust</div><strong id="gust">--</strong></div>
+        <div class="wxstat"><div class="label">Pressure</div><strong id="pressure">--</strong></div>
+      </div>
+    </div>
+
+    <div id="forecast" class="forecast">
+      <div class="hour"><div class="t">NEXT</div><div class="d">Loading</div><div class="n">--</div></div>
+      <div class="hour"><div class="t">LATER</div><div class="d">Loading</div><div class="n">--</div></div>
+      <div class="hour"><div class="t">AFTER</div><div class="d">Loading</div><div class="n">--</div></div>
+    </div>
+  </section>
+</div>
+<div class="footer" id="clock"></div>
+
+<script>
+const NOAA = {
+ flux:'https://services.swpc.noaa.gov/products/summary/10cm-flux.json',
+ mag:'https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json',
+ wind:'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json',
+ kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
+};
+const FALLBACK = {label:'Palmer, Alaska', lat:61.5997, lon:-149.1128};
+
+function prop(name, fallback){
+  try{
+    if(typeof window!=='undefined' && window[name]!==undefined && window[name]!==null && window[name]!=='') return window[name];
+    const v=Function('return typeof '+name+' !== "undefined" ? '+name+' : undefined')();
+    return (v!==undefined && v!==null && v!=='')?v:fallback;
+  }catch(e){return fallback}
+}
+function loc(){
+  const la=parseFloat(prop('latitude',FALLBACK.lat)), lo=parseFloat(prop('longitude',FALLBACK.lon));
+  return {label:String(prop('locationLabel',FALLBACK.label)),lat:Number.isFinite(la)?la:FALLBACK.lat,lon:Number.isFinite(lo)?lo:FALLBACK.lon};
+}
+function n(v,d=0){return Number.isFinite(Number(v))?Number(v).toFixed(d):'--'}
+function cToF(c){return Number.isFinite(c)?Math.round(c*9/5+32):null}
+function msToMph(x){return Number.isFinite(x)?Math.round(x*2.23694):null}
+function paToInHg(x){return Number.isFinite(x)?(x/3386.389).toFixed(2):null}
+function setQuality(dot,state,ageMs){
+  dot.className='dot '+(ageMs>25*60*1000?'stale':'');
+  state.textContent=ageMs>25*60*1000?'STALE':'LIVE';
+}
+async function j(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+function cls(el, kind){el.classList.remove('good','warn','bad','ice','violet'); if(kind)el.classList.add(kind)}
+function kpClass(k){return k>=5?'bad':k>=4?'warn':'good'}
+function bzClass(b){return b<=-8?'bad':b<=-4?'warn':'good'}
+function windClass(w){return w>=650?'bad':w>=500?'warn':'good'}
+function fluxClass(f){return f>=150?'good':f>=100?'warn':'ice'}
+
+function evaluateHF(sfi,kp,bz,wind){
+  let penalty=0;
+  if(kp>=5) penalty+=3; else if(kp>=4) penalty+=2; else if(kp>=3) penalty+=1;
+  if(bz<=-8) penalty+=2; else if(bz<=-4) penalty+=1;
+  if(wind>=650) penalty+=2; else if(wind>=500) penalty+=1;
+  let text='QUIET / FAVORABLE', kind='good';
+  if(penalty>=4){text='DISTURBED',kind='bad'} else if(penalty>=2){text='WATCH',kind='warn'}
+  const polar = penalty>=4?'HIGH':penalty>=2?'MODERATE':'LOW';
+  const polarKind = penalty>=4?'bad':penalty>=2?'warn':'good';
+  const s = Number.isFinite(sfi)?sfi:100;
+  const high = s>=145?'good':s>=105?'warn':'ice';
+  const mid = penalty>=4?'bad':penalty>=2?'warn':'good';
+  return {text,kind,polar,polarKind,bands:{b10:high,b15:high,b20:mid,b40:mid,b80:kp>=5?'bad':kp>=4?'warn':'good'}};
+}
+
+async function updateSpace(){
+  try{
+    const [flux,mag,sw,kps]=await Promise.all([j(NOAA.flux),j(NOAA.mag),j(NOAA.wind),j(NOAA.kp)]);
+    const f=Number(flux?.[0]?.flux);
+    const m=mag?.[0]||{}, w=sw?.[0]||{}, last=(kps||[]).at(-1)||{};
+    const k=Number(last.Kp), a=Number(last.a_running), bzv=Number(m.bz_gsm), speed=Number(w.proton_speed);
+    sfi.textContent=n(f,0); kp.textContent=n(k,2); aidx.textContent=n(a,0); bz.textContent=(bzv>0?'+':'')+n(bzv,1); wind.textContent=n(speed,0);
+    cls(sfi,fluxClass(f)); cls(kp,kpClass(k)); cls(aidx,a>=30?'bad':a>=20?'warn':'good'); cls(bz,bzClass(bzv)); cls(wind,windClass(speed));
+    kpNote.textContent=k>=5?'storm level':k>=4?'active':'geomagnetic';
+    const e=evaluateHF(f,k,bzv,speed); impact.textContent=e.text; cls(impact,e.kind); polar.textContent=e.polar; cls(polar,e.polarKind);
+    Object.entries(e.bands).forEach(([id,knd])=>{const x=document.getElementById(id);cls(x,knd)});
+    const newest=[flux?.[0]?.time_tag,m.time_tag,w.time_tag,last.time_tag].filter(Boolean).map(x=>new Date(x).getTime()).sort((a,b)=>b-a)[0]||Date.now();
+    setQuality(spaceDot,spaceState,Date.now()-newest);
+    spaceAge.textContent='NOAA '+new Date(newest).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' local';
+    localStorage.setItem('kl5ne_space',JSON.stringify({t:Date.now(),f,k,a,bzv,speed,newest}));
+  }catch(err){
+    const c=JSON.parse(localStorage.getItem('kl5ne_space')||'null');
+    if(c){
+      sfi.textContent=n(c.f);kp.textContent=n(c.k,2);aidx.textContent=n(c.a);bz.textContent=(c.bzv>0?'+':'')+n(c.bzv,1);wind.textContent=n(c.speed);
+      spaceDot.className='dot stale';spaceState.textContent='CACHED';spaceAge.textContent='NOAA unavailable · last good data';
+    }else{spaceDot.className='dot off';spaceState.textContent='OFFLINE';spaceAge.textContent='NOAA unavailable'}
+  }
+}
+
+async function updateWeather(){
+  const L=loc(); wxTitle.textContent=(L.label||'LOCAL').toUpperCase().replace(', ALASKA','')+' WX';
+  try{
+    let point=JSON.parse(localStorage.getItem('kl5ne_nws_point')||'null');
+    if(!point || Date.now()-point.t>12*3600e3 || point.lat!==L.lat || point.lon!==L.lon){
+      const p=await j(`https://api.weather.gov/points/${L.lat},${L.lon}`);
+      point={t:Date.now(),lat:L.lat,lon:L.lon,forecastHourly:p.properties.forecastHourly,stations:p.properties.observationStations};
+      localStorage.setItem('kl5ne_nws_point',JSON.stringify(point));
+    }
+    const [stations,hourly]=await Promise.all([j(point.stations),j(point.forecastHourly)]);
+    const station=stations?.features?.[0]?.properties?.stationIdentifier;
+    if(!station) throw new Error('No station');
+    const obs=await j(`https://api.weather.gov/stations/${station}/observations/latest`);
+    const o=obs.properties||{};
+    const tc=Number(o.temperature?.value), wc=Number(o.windChill?.value), hc=Number(o.heatIndex?.value);
+    const tf=cToF(tc), feel=cToF(Number.isFinite(wc)?wc:Number.isFinite(hc)?hc:tc);
+    temp.textContent=tf??'--'; condition.textContent=o.textDescription||'Current conditions';
+    feels.textContent=feel!==null && feel!==tf?`Feels like ${feel}°F · station ${station}`:`Station ${station}`;
+    wxWind.textContent=(o.windDirection?.value!=null?Math.round(o.windDirection.value)+'° ':'')+(msToMph(Number(o.windSpeed?.value))??'--')+' mph';
+    gust.textContent=(msToMph(Number(o.windGust?.value))??'--')+' mph';
+    rh.textContent=(o.relativeHumidity?.value!=null?Math.round(o.relativeHumidity.value):'--')+'%';
+    pressure.textContent=(paToInHg(Number(o.barometricPressure?.value))??'--')+' in';
+    const periods=(hourly?.properties?.periods||[]).slice(0,3);
+    forecast.innerHTML=periods.map((p,i)=>`<div class="hour"><div class="t">${i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'})}</div><div class="d">${p.shortForecast||''}</div><div class="n">${p.temperature}°${p.temperatureUnit}</div></div>`).join('');
+    const obsTime=new Date(o.timestamp||Date.now()).getTime(); setQuality(wxDot,wxState,Date.now()-obsTime);
+    localStorage.setItem('kl5ne_weather',JSON.stringify({t:Date.now(),tf,feel,condition:o.textDescription,station,wind:wxWind.textContent,gust:gust.textContent,rh:rh.textContent,pressure:pressure.textContent,forecast:periods}));
+  }catch(err){
+    const c=JSON.parse(localStorage.getItem('kl5ne_weather')||'null');
+    if(c){
+      temp.textContent=c.tf??'--';condition.textContent=c.condition||'Cached conditions';feels.textContent='Cached · station '+(c.station||'');
+      wxWind.textContent=c.wind||'--';gust.textContent=c.gust||'--';rh.textContent=c.rh||'--';pressure.textContent=c.pressure||'--';
+      wxDot.className='dot stale';wxState.textContent='CACHED';
+      if(c.forecast) forecast.innerHTML=c.forecast.slice(0,3).map((p,i)=>`<div class="hour"><div class="t">${i===0?'NEXT':new Date(p.startTime).toLocaleTimeString([],{hour:'numeric'})}</div><div class="d">${p.shortForecast||''}</div><div class="n">${p.temperature}°${p.temperatureUnit}</div></div>`).join('');
+    }else{wxDot.className='dot off';wxState.textContent='OFFLINE';condition.textContent='NWS unavailable'}
+  }
+}
+function tickClock(){
+  const d=new Date();
+  const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const utc=d.toLocaleTimeString([],{timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false});
+  clock.textContent=`AK/local ${local}   ·   UTC ${utc}Z`;
+}
+function init(){
+  tickClock();updateSpace();updateWeather();
+  setInterval(tickClock,1000);
+  setInterval(updateSpace,5*60*1000);
+  setInterval(updateWeather,10*60*1000);
+}
+
+window.icueEvents = window.icueEvents || {};
+window.icueEvents.onDataUpdated = function(){ updateWeather(); };
+window.icueEvents.onICUEInitialized = function(){ init(); };
+
+if(typeof iCUE_initialized!=='undefined' && iCUE_initialized){
+  init();
+}else{
+  init();
+}
+</script>
+</body>
+</html>
