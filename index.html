@@ -28,55 +28,59 @@ body{padding:var(--pad)}
 .space{padding:14px 18px 14px;display:grid;grid-template-rows:auto auto 1fr;gap:12px}
 .weather{padding:14px 18px 14px;display:grid;grid-template-rows:auto 1fr auto;gap:12px}
 
-.header{display:grid;grid-template-columns:1fr auto;align-items:start;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.header{display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .title{font-size:clamp(18px,1.55vw,30px);line-height:1;font-weight:850;letter-spacing:.075em;text-transform:uppercase}
 .subtitle{font-size:clamp(10px,.68vw,14px);color:var(--muted);margin-top:5px}
-.headerRight{display:flex;align-items:center;gap:16px}
-.clock{font-size:clamp(11px,.72vw,15px);color:var(--muted);white-space:nowrap;text-align:right}
+.headerRight{display:flex;align-items:center;gap:18px}
+.clock{font-size:clamp(22px,1.55vw,32px);font-weight:800;color:var(--text);white-space:nowrap;text-align:right;letter-spacing:.015em}
 .live{display:flex;align-items:center;gap:7px;font-size:clamp(10px,.65vw,13px);color:var(--muted);white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
 .dot.stale{background:var(--warn);box-shadow:0 0 10px var(--warn)}
 .dot.off{background:var(--bad);box-shadow:0 0 10px var(--bad)}
 
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
 .metric{min-width:0;height:132px;background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center}
 .label{font-size:clamp(10px,.67vw,13px);line-height:1.15;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .value{font-size:clamp(32px,2.55vw,54px);line-height:.95;font-weight:850;margin-top:8px;white-space:nowrap}
 .subvalue{font-size:clamp(9px,.6vw,12px);color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)} .ice{color:var(--ice)}
 
-.hfBlock{min-height:0;display:grid;grid-template-columns:1.25fr .8fr;gap:10px}
-.hfMain,.polarCard{background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:0}
-.hfMain{display:grid;grid-template-rows:auto auto 1fr}
-.hfHeadline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.hfStatus{font-size:clamp(24px,2vw,42px);font-weight:900;line-height:1}
-.hfNote{font-size:clamp(10px,.66vw,13px);color:var(--muted)}
-.bandRow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;align-self:end;margin-top:10px}
-.band{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:48px;border-radius:12px;background:#102028;border:1px solid #243943;padding:5px 4px;text-align:center}
-.bandName{font-size:clamp(11px,.7vw,14px);font-weight:800}
-.bandState{font-size:clamp(9px,.58vw,11px);font-weight:800;letter-spacing:.05em;margin-top:2px}
-.polarCard{display:flex;flex-direction:column;justify-content:center}
-.polarValue{font-size:clamp(28px,2.25vw,46px);font-weight:900;line-height:1;margin-top:9px}
-.noaaStamp{font-size:clamp(9px,.58vw,11px);color:var(--muted);margin-top:8px}
+.hfBlock{min-height:0;background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;grid-template-rows:auto 1fr;gap:14px}
+.hfTop{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,.72fr);gap:14px;align-items:stretch}
+.hfSummary,.polarCard{min-width:0;background:#0b171d;border:1px solid #20333c;border-radius:13px;padding:13px 15px}
+.hfSummary{display:flex;flex-direction:column;justify-content:center}
+.hfHeadline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:6px}
+.hfStatus{font-size:clamp(27px,2.2vw,46px);font-weight:900;line-height:.95}
+.hfNote{font-size:clamp(10px,.7vw,14px);color:var(--muted)}
+.polarCard{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:16px;align-items:center}
+.polarCard .label{align-self:end}
+.polarValue{font-size:clamp(30px,2.35vw,48px);font-weight:900;line-height:1;grid-row:1 / span 2;grid-column:2}
+.noaaStamp{font-size:clamp(10px,.66vw,13px);color:var(--muted);margin-top:6px}
+.bandRow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;min-height:0}
+.band{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:92px;border-radius:14px;background:#102028;border:1px solid #29424d;padding:10px 7px;text-align:center}
+.bandName{font-size:clamp(18px,1.25vw,26px);font-weight:900;line-height:1}
+.bandState{font-size:clamp(14px,.95vw,20px);font-weight:900;letter-spacing:.06em;margin-top:8px}
 
-.wxBody{min-height:0;display:grid;grid-template-columns:1.05fr 1fr;gap:12px;align-items:center}
-.wxCurrent{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.wxBody{min-height:0;display:grid;grid-template-columns:.95fr 1.15fr;gap:14px;align-items:center}
+.wxCurrent{display:flex;flex-direction:column;justify-content:center;min-width:0;padding:8px 0}
 .tempLine{display:flex;align-items:flex-start;gap:4px}
 .temp{font-size:clamp(64px,5.1vw,108px);font-weight:900;line-height:.83;letter-spacing:-.055em}
 .degree{font-size:clamp(24px,1.7vw,36px);font-weight:800;margin-top:7px}
-.conditionRow{display:flex;align-items:center;gap:10px;margin-top:12px}
-.wxIcon{width:58px;height:58px;display:grid;place-items:center;flex:0 0 auto}
+.conditionRow{display:flex;align-items:center;gap:13px;margin-top:16px}
+.wxIcon{width:70px;height:70px;display:grid;place-items:center;flex:0 0 auto}
 .wxIcon svg{width:100%;height:100%;stroke:var(--warn);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-.condition{font-size:clamp(17px,1.3vw,26px);font-weight:850;line-height:1.05}
-.feels{font-size:clamp(10px,.68vw,13px);color:var(--muted);margin-top:5px}
-.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.wxstat{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:10px 11px;min-width:0}
-.wxstat strong{display:block;font-size:clamp(15px,1.08vw,22px);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.forecast{border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.hour{min-width:0}
-.hourTime{font-size:clamp(9px,.58vw,11px);text-transform:uppercase;color:var(--muted)}
-.hourDesc{font-size:clamp(10px,.67vw,13px);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
-.hourTemp{font-size:clamp(17px,1.3vw,25px);font-weight:900;margin-top:4px}
+.condition{font-size:clamp(20px,1.45vw,29px);font-weight:850;line-height:1.05}
+.feels{font-size:clamp(12px,.82vw,16px);color:var(--muted);margin-top:7px}
+.wxStats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wxstat{background:var(--tile);border:1px solid var(--line);border-radius:13px;padding:15px 14px;min-width:0;min-height:88px;display:flex;flex-direction:column;justify-content:center}
+.wxstat strong{display:block;font-size:clamp(20px,1.42vw,29px);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxstat.windStat{border-color:#31505e;background:#0c1a21}
+.wxstat.windStat strong{font-size:clamp(22px,1.55vw,32px)}
+.forecast{border-top:1px solid var(--line);padding-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hour{min-width:0;background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:11px 12px;min-height:100px;display:flex;flex-direction:column;justify-content:center}
+.hourTime{font-size:clamp(11px,.74vw,14px);font-weight:800;text-transform:uppercase;color:var(--muted)}
+.hourDesc{font-size:clamp(13px,.88vw,17px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+.hourTemp{font-size:clamp(20px,1.45vw,29px);font-weight:900;margin-top:7px}
 
 @media(max-width:1250px){
   :root{--pad:8px;--gap:8px}
@@ -84,8 +88,9 @@ body{padding:var(--pad)}
   .weather{display:none}
   .metric{height:104px;padding:9px 10px}
   .space{padding:10px 12px}
-  .hfBlock{grid-template-columns:1fr}
+  .hfTop{grid-template-columns:1fr}
   .polarCard{display:none}
+  .band{min-height:70px}
 }
 </style>
 </head>
@@ -107,26 +112,29 @@ body{padding:var(--pad)}
       <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value ice">--</div><div class="subvalue">SFI · 10.7 cm</div></div>
       <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="subvalue">Geomagnetic</div></div>
       <div class="metric"><div class="label">A Index</div><div id="aidx" class="value">--</div><div class="subvalue">Running A</div></div>
+      <div class="metric"><div class="label">Alaska MUF</div><div id="muf" class="value ice">--</div><div id="mufNote" class="subvalue">MHz · King Salmon proxy</div></div>
       <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="subvalue">nT · south is rough</div></div>
       <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="subvalue">km/s</div></div>
     </div>
 
     <div class="hfBlock">
-      <div class="hfMain">
-        <div class="label">HF NOW · Alaska operating conditions</div>
-        <div class="hfHeadline"><div id="impact" class="hfStatus">CALCULATING…</div><div id="hfNote" class="hfNote">Using SFI, Kp, Bz and solar wind</div></div>
-        <div class="bandRow">
-          <div id="b10" class="band"><div class="bandName">10m</div><div class="bandState">--</div></div>
-          <div id="b15" class="band"><div class="bandName">15m</div><div class="bandState">--</div></div>
-          <div id="b20" class="band"><div class="bandName">20m</div><div class="bandState">--</div></div>
-          <div id="b40" class="band"><div class="bandName">40m</div><div class="bandState">--</div></div>
-          <div id="b80" class="band"><div class="bandName">80m</div><div class="bandState">--</div></div>
+      <div class="hfTop">
+        <div class="hfSummary">
+          <div class="label">HF NOW · Alaska operating conditions</div>
+          <div class="hfHeadline"><div id="impact" class="hfStatus">CALCULATING…</div><div id="hfNote" class="hfNote">Using SFI, Kp, Bz and solar wind</div></div>
+        </div>
+        <div class="polarCard">
+          <div class="label">Polar Path</div>
+          <div id="polar" class="polarValue">--</div>
+          <div id="spaceAge" class="noaaStamp">Waiting for NOAA</div>
         </div>
       </div>
-      <div class="polarCard">
-        <div class="label">Polar Path</div>
-        <div id="polar" class="polarValue">--</div>
-        <div id="spaceAge" class="noaaStamp">Waiting for NOAA</div>
+      <div class="bandRow">
+        <div id="b10" class="band"><div class="bandName">10m</div><div class="bandState">--</div></div>
+        <div id="b15" class="band"><div class="bandName">15m</div><div class="bandState">--</div></div>
+        <div id="b20" class="band"><div class="bandName">20m</div><div class="bandState">--</div></div>
+        <div id="b40" class="band"><div class="bandName">40m</div><div class="bandState">--</div></div>
+        <div id="b80" class="band"><div class="bandName">80m</div><div class="bandState">--</div></div>
       </div>
     </div>
   </section>
@@ -153,7 +161,7 @@ body{padding:var(--pad)}
       </div>
 
       <div class="wxStats">
-        <div class="wxstat"><div class="label">Wind</div><strong id="wxWind">--</strong></div>
+        <div class="wxstat windStat"><div class="label">Wind</div><strong id="wxWind">--</strong></div>
         <div class="wxstat"><div class="label">Humidity</div><strong id="rh">--</strong></div>
         <div class="wxstat"><div class="label">Gust</div><strong id="gust">--</strong></div>
         <div class="wxstat"><div class="label">Pressure</div><strong id="pressure">--</strong></div>
@@ -176,6 +184,7 @@ const NOAA={
   kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
+const HAMQSL_MUF='https://www.hamqsl.com/solarxml.php?muf=alska';
 let started=false;
 
 function prop(name,fallback){
@@ -194,6 +203,7 @@ function fToC(f){return Number.isFinite(f)?Math.round((f-32)*5/9):null}
 function msToMph(x){return Number.isFinite(x)?Math.round(x*2.23694):null}
 function paToInHg(x){return Number.isFinite(x)?(x/3386.389).toFixed(2):null}
 async function j(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function t(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text()}
 function paint(el,kind){el.classList.remove('good','warn','bad','ice');if(kind)el.classList.add(kind)}
 function quality(dot,state,age){dot.className='dot '+(age>25*60*1000?'stale':'');state.textContent=age>25*60*1000?'STALE':'LIVE'}
 function kpClass(k){return k>=5?'bad':k>=4?'warn':'good'}
@@ -262,6 +272,33 @@ function iconSvg(desc){
   return '<svg viewBox="0 0 64 64"><path d="M16 43h32a12 12 0 0 0 0-24 17 17 0 0 0-32 6A9 9 0 0 0 16 43z"/></svg>';
 }
 
+async function updateMUF(){
+  try{
+    const xmlText=await t(HAMQSL_MUF);
+    const doc=new DOMParser().parseFromString(xmlText,'application/xml');
+    const node=doc.querySelector('solardata > muf, muf');
+    const raw=node?.textContent?.trim()||'';
+    const match=raw.match(/([0-9]+(?:\.[0-9]+)?)/);
+    if(!match)throw new Error('MUF missing');
+    const value=Number(match[1]);
+    muf.textContent=n(value,1);
+    mufNote.textContent='MHz · King Salmon proxy';
+    paint(muf,value>=21?'good':value>=14?'warn':'ice');
+    localStorage.setItem('kl5ne_muf',JSON.stringify({t:Date.now(),value}));
+  }catch(err){
+    const cached=JSON.parse(localStorage.getItem('kl5ne_muf')||'null');
+    if(cached&&Date.now()-cached.t<6*3600e3){
+      muf.textContent=n(cached.value,1);
+      mufNote.textContent='MHz · cached Alaska proxy';
+      paint(muf,'ice');
+    }else{
+      muf.textContent='--';
+      mufNote.textContent='MUF source unavailable';
+      paint(muf,'ice');
+    }
+  }
+}
+
 async function updateSpace(){
   try{
     const [flux,mag,sw,kps]=await Promise.all([j(NOAA.flux),j(NOAA.mag),j(NOAA.wind),j(NOAA.kp)]);
@@ -280,7 +317,7 @@ async function updateSpace(){
     const newest=[flux?.[0]?.time_tag,m.time_tag,w.time_tag,last.time_tag].filter(Boolean).map(x=>new Date(x).getTime()).sort((a,b)=>b-a)[0]||Date.now();
     quality(spaceDot,spaceState,Date.now()-newest);
     spaceAge.textContent='NOAA updated '+new Date(newest).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    localStorage.setItem('kl5ne_space_v03',JSON.stringify({t:Date.now(),f,k,a,bzv,speed,newest}));
+    localStorage.setItem('kl5ne_space_v04',JSON.stringify({t:Date.now(),f,k,a,bzv,speed,newest}));
   }catch(err){
     spaceDot.className='dot off';spaceState.textContent='OFFLINE';spaceAge.textContent='NOAA unavailable';
   }
@@ -326,9 +363,10 @@ function tickClock(){
 }
 function init(){
   if(started)return;started=true;
-  tickClock();updateSpace();updateWeather();
+  tickClock();updateSpace();updateMUF();updateWeather();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
+  setInterval(updateMUF,60*60*1000);
   setInterval(updateWeather,10*60*1000);
 }
 window.icueEvents=window.icueEvents||{};
