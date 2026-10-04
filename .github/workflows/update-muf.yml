@@ -2,12 +2,6 @@ name: Update Alaska MUF
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/update-muf.yml"
-  schedule:
-    - cron: "*/15 * * * *"
 
 permissions:
   contents: write
