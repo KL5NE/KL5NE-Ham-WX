@@ -209,6 +209,7 @@ const NOAA={
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
 const MUF_FEEDS=['https://alaskahamradio.com/wp-json/ahr/v1/muf','https://alaskahamradio.com/?rest_route=/ahr/v1/muf'];
+const MUF_JSONP='https://alaskahamradio.com/?ahr_muf_jsonp=1';
 let started=false;
 let currentMUF=null;
 let currentFoF2=null;
@@ -246,12 +247,36 @@ async function j(url){
   if(!r.ok)throw new Error('HTTP '+r.status);
   return r.json();
 }
+async function jJsonp(url){
+  return new Promise((resolve,reject)=>{
+    const cb='__ahrMuf'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    const cleanup=()=>{
+      try{delete window[cb]}catch(e){window[cb]=undefined}
+      if(script.parentNode)script.parentNode.removeChild(script);
+    };
+    const timer=setTimeout(()=>{
+      if(done)return;done=true;cleanup();reject(new Error('JSONP timeout'));
+    },10000);
+    window[cb]=(data)=>{
+      if(done)return;done=true;clearTimeout(timer);cleanup();resolve(data);
+    };
+    script.onerror=()=>{
+      if(done)return;done=true;clearTimeout(timer);cleanup();reject(new Error('JSONP load failed'));
+    };
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb)+'&t='+Date.now();
+    document.head.appendChild(script);
+  });
+}
 async function jFirst(urls){
   let lastErr=null;
   for(const base of urls){
     try{return await j(base+(base.includes('?')?'&':'?')+'t='+Date.now())}
     catch(e){lastErr=e}
   }
+  try{return await jJsonp(MUF_JSONP)}
+  catch(e){lastErr=e}
   throw lastErr||new Error('No API endpoint available');
 }
 async function t(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text()}
