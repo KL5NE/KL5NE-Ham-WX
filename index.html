@@ -208,7 +208,7 @@ const NOAA={
   kp:'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
-const MUF_FEED='https://alaskahamradio.com/wp-json/ahr/v1/muf';
+const MUF_FEEDS=['https://alaskahamradio.com/wp-json/ahr/v1/muf','https://alaskahamradio.com/?rest_route=/ahr/v1/muf'];
 let started=false;
 let currentMUF=null;
 let currentFoF2=null;
@@ -241,7 +241,19 @@ function ageText(ts){
   const hrs=Math.round(mins/60);
   return hrs+' hr'+(hrs===1?'':'s')+' ago';
 }
-async function j(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function j(url){
+  const r=await fetch(url,{cache:'no-store',mode:'cors',credentials:'omit',redirect:'follow'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function jFirst(urls){
+  let lastErr=null;
+  for(const base of urls){
+    try{return await j(base+(base.includes('?')?'&':'?')+'t='+Date.now())}
+    catch(e){lastErr=e}
+  }
+  throw lastErr||new Error('No API endpoint available');
+}
 async function t(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text()}
 function paint(el,kind){el.classList.remove('good','warn','bad','ice');if(kind)el.classList.add(kind)}
 function quality(dot,state,age){dot.className='dot '+(age>25*60*1000?'stale':'');state.textContent=age>25*60*1000?'STALE':'LIVE'}
@@ -337,7 +349,7 @@ function iconSvg(desc){
 
 async function updateMUF(){
   try{
-    const d=await j(MUF_FEED+'?t='+Date.now());
+    const d=await jFirst(MUF_FEEDS);
     const mv=Number(d.muf3000_mhz),fv=Number(d.fof2_mhz);
     if(d.ok===false||!Number.isFinite(mv))throw new Error(d.error||'MUF missing');
     currentMUF=mv;
@@ -386,7 +398,7 @@ async function updateMUF(){
       paint(muf,age>45?'bad':'ice');
     }else{
       muf.textContent='--';
-      mufNote.textContent='AHR MUF API unavailable';
+      mufNote.textContent='AHR MUF API unavailable · '+String(err&&err.message?err.message:'fetch failed');
       paint(muf,'ice');
     }
   }
