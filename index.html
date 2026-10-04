@@ -130,7 +130,7 @@ body{padding:var(--pad)}
       <div class="hfTop">
         <div class="hfSummary">
           <div class="label">HF NOW · Alaska operating conditions</div>
-          <div class="hfHeadline"><div id="impact" class="hfStatus">CALCULATING…</div><div id="hfNote" class="hfNote">Using SFI, Kp, Bz and solar wind</div></div>
+          <div class="hfHeadline"><div id="impact" class="hfStatus">CALCULATING…</div><div id="hfNote" class="hfNote">Bands use MUF first · space weather modifies</div></div>
         </div>
         <div class="polarCard">
           <div class="label">Polar Path</div>
@@ -210,6 +210,9 @@ const NOAA={
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
 const MUF_FEED='https://alaskahamradio.com/wp-json/ahr/v1/muf';
 let started=false;
+let currentMUF=null;
+let currentFoF2=null;
+let lastSpace=null;
 
 function prop(name,fallback){
   try{
@@ -247,38 +250,62 @@ function bzClass(b){return b<=-8?'bad':b<=-4?'warn':'good'}
 function windClass(w){return w>=650?'bad':w>=500?'warn':'good'}
 function fluxClass(f){return f>=150?'good':f>=100?'warn':'ice'}
 
-function bandLevel(name,sfi,kp,bz,wind){
+function bandLevel(name,sfi,kp,bz,wind,mufv,fof2v){
   let disturbance=0;
   if(kp>=5)disturbance+=3;else if(kp>=4)disturbance+=2;else if(kp>=3)disturbance+=1;
   if(bz<=-8)disturbance+=2;else if(bz<=-4)disturbance+=1;
   if(wind>=650)disturbance+=2;else if(wind>=500)disturbance+=1;
 
-  if(name==='10m'){
-    if(disturbance>=4||sfi<90)return ['POOR','bad'];
-    if(sfi>=145&&disturbance<=1)return ['GOOD','good'];
-    return ['FAIR','warn'];
+  const freq={ '10m':28.4,'15m':21.2,'20m':14.2,'40m':7.15,'80m':3.8 }[name];
+
+  // Upper HF bands: Palmer MUF is the primary gate.
+  if(name==='10m'||name==='15m'||name==='20m'){
+    if(!Number.isFinite(Number(mufv))) return ['UNKNOWN','ice'];
+    const ratio=Number(mufv)/freq;
+
+    // Well below the band frequency: do not call the band usable.
+    if(ratio<0.93) return ['POOR','bad'];
+
+    // Near the MUF edge: openings can be spotty/short-lived.
+    if(ratio<1.06) return ['FAIR','warn'];
+
+    // MUF supports the band, but disturbed polar conditions can still wreck it.
+    if(disturbance>=4) return ['POOR','bad'];
+    if(disturbance>=2) return ['FAIR','warn'];
+
+    // Very low solar flux is another reason to avoid optimistic high-band ratings.
+    if(name==='10m'&&sfi<110) return ['FAIR','warn'];
+    if(name==='15m'&&sfi<90) return ['FAIR','warn'];
+
+    return ['GOOD','good'];
   }
-  if(name==='15m'){
-    if(disturbance>=4||sfi<80)return ['POOR','bad'];
-    if(sfi>=115&&disturbance<=2)return ['GOOD','good'];
-    return ['FAIR','warn'];
-  }
-  if(name==='20m'){
-    if(disturbance>=5)return ['POOR','bad'];
-    if(disturbance<=2)return ['GOOD','good'];
-    return ['FAIR','warn'];
-  }
+
+  // 40m: MUF normally isn't the limiting factor; geomagnetic disturbance matters more.
   if(name==='40m'){
-    if(kp>=6)return ['POOR','bad'];
-    if(disturbance<=3)return ['GOOD','good'];
-    return ['FAIR','warn'];
+    if(Number.isFinite(Number(mufv))&&Number(mufv)<6.8) return ['POOR','bad'];
+    if(kp>=6||disturbance>=5) return ['POOR','bad'];
+    if(disturbance>=3) return ['FAIR','warn'];
+    return ['GOOD','good'];
   }
+
+  // 80m: mostly disturbance/noise limited here. foF2 is shown separately for NVIS context.
   if(name==='80m'){
-    if(kp>=6)return ['POOR','bad'];
-    if(kp<=3)return ['GOOD','good'];
-    return ['FAIR','warn'];
+    if(kp>=6||disturbance>=5) return ['POOR','bad'];
+    if(disturbance>=3) return ['FAIR','warn'];
+    return ['GOOD','good'];
   }
+
   return ['--',''];
+}
+
+function refreshBands(){
+  if(!lastSpace)return;
+  const {f,k,bzv,speed}=lastSpace;
+  setBand('b10','10m',f,k,bzv,speed,currentMUF,currentFoF2);
+  setBand('b15','15m',f,k,bzv,speed,currentMUF,currentFoF2);
+  setBand('b20','20m',f,k,bzv,speed,currentMUF,currentFoF2);
+  setBand('b40','40m',f,k,bzv,speed,currentMUF,currentFoF2);
+  setBand('b80','80m',f,k,bzv,speed,currentMUF,currentFoF2);
 }
 
 function evaluateHF(sfi,kp,bz,wind){
@@ -286,16 +313,16 @@ function evaluateHF(sfi,kp,bz,wind){
   if(kp>=5)penalty+=3;else if(kp>=4)penalty+=2;else if(kp>=3)penalty+=1;
   if(bz<=-8)penalty+=2;else if(bz<=-4)penalty+=1;
   if(wind>=650)penalty+=2;else if(wind>=500)penalty+=1;
-  let text='QUIET / FAVORABLE',kind='good';
-  if(penalty>=4){text='DISTURBED',kind='bad'}else if(penalty>=2){text='WATCH',kind='warn'}
+  let text='SPACE WX QUIET',kind='good';
+  if(penalty>=4){text='SPACE WX DISTURBED',kind='bad'}else if(penalty>=2){text='SPACE WX WATCH',kind='warn'}
   const polar=penalty>=4?'HIGH RISK':penalty>=2?'WATCH':'LOW RISK';
   const polarKind=penalty>=4?'bad':penalty>=2?'warn':'good';
   return {text,kind,polar,polarKind};
 }
 
-function setBand(id,name,sfi,kp,bz,wind){
+function setBand(id,name,sfi,kp,bz,wind,mufv,fof2v){
   const el=document.getElementById(id),state=el.querySelector('.bandState');
-  const [txt,kind]=bandLevel(name,sfi,kp,bz,wind);
+  const [txt,kind]=bandLevel(name,sfi,kp,bz,wind,mufv,fof2v);
   state.textContent=txt;paint(el,kind);paint(state,kind);
 }
 
@@ -313,6 +340,8 @@ async function updateMUF(){
     const d=await j(MUF_FEED+'?t='+Date.now());
     const mv=Number(d.muf3000_mhz),fv=Number(d.fof2_mhz);
     if(d.ok===false||!Number.isFinite(mv))throw new Error(d.error||'MUF missing');
+    currentMUF=mv;
+    currentFoF2=Number.isFinite(fv)?fv:null;
 
     const sourceMs=Date.parse(d.source_time_utc||d.generated_utc||'');
     const ageMin=Number.isFinite(Number(d.source_age_min))
@@ -336,6 +365,7 @@ async function updateMUF(){
       paint(muf,mv>=21?'good':mv>=14?'warn':'ice');
     }
 
+    refreshBands();
     localStorage.setItem('kl5ne_muf',JSON.stringify({
       t:Date.now(),
       sourceTime:d.source_time_utc||d.generated_utc||null,
@@ -374,7 +404,8 @@ async function updateSpace(){
     const e=evaluateHF(f,k,bzv,speed);
     impact.textContent=e.text;paint(impact,e.kind);
     polar.textContent=e.polar;paint(polar,e.polarKind);
-    setBand('b10','10m',f,k,bzv,speed);setBand('b15','15m',f,k,bzv,speed);setBand('b20','20m',f,k,bzv,speed);setBand('b40','40m',f,k,bzv,speed);setBand('b80','80m',f,k,bzv,speed);
+    lastSpace={f,k,bzv,speed};
+    refreshBands();
 
     const newest=[flux?.[0]?.time_tag,m.time_tag,w.time_tag,last.time_tag].filter(Boolean).map(x=>new Date(x).getTime()).sort((a,b)=>b-a)[0]||Date.now();
     quality(spaceDot,spaceState,Date.now()-newest);
