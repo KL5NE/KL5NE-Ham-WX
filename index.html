@@ -556,9 +556,10 @@ async function updateWeather(){
 
 function tickClock(){
   const d=new Date();
+  const dateText=d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const utc=d.toLocaleTimeString([],{timeZone:'UTC',hour:'2-digit',minute:'2-digit',hour12:false});
-  clock.textContent='AK '+local+' · UTC '+utc+'Z';
+  clock.textContent=dateText+' · AK '+local+' · UTC '+utc+'Z';
 }
 function init(){
   if(started)return;started=true;
