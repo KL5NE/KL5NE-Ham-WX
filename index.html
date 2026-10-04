@@ -182,7 +182,7 @@ body{padding:var(--pad)}
       <div class="metric"><div class="label">Solar Flux</div><div id="sfi" class="value ice">--</div><div class="subvalue">SFI · 10.7 cm</div></div>
       <div class="metric"><div class="label">Planetary Kp</div><div id="kp" class="value">--</div><div id="kpNote" class="subvalue">Geomagnetic</div></div>
       <div class="metric"><div class="label">A Index</div><div id="aidx" class="value">--</div><div class="subvalue">Running A</div></div>
-      <div class="metric"><div class="label">MUF3000 · S. Central AK</div><div id="muf" class="value ice">--</div><div id="mufNote" class="subvalue">KC2G / GIRO · waiting</div></div>
+      <div class="metric"><div class="label">MUF3000 · PALMER</div><div id="muf" class="value ice">--</div><div id="mufNote" class="subvalue">KC2G / GIRO · waiting</div></div>
       <div class="metric"><div class="label">IMF Bz</div><div id="bz" class="value">--</div><div class="subvalue">nT · south is rough</div></div>
       <div class="metric"><div class="label">Solar Wind</div><div id="wind" class="value">--</div><div class="subvalue">km/s</div></div>
     </div>
@@ -205,18 +205,6 @@ body{padding:var(--pad)}
         <div id="b20" class="band"><div class="bandName">20m</div><div class="bandState">--</div></div>
         <div id="b40" class="band"><div class="bandName">40m</div><div class="bandState">--</div></div>
         <div id="b80" class="band"><div class="bandName">80m</div><div class="bandState">--</div></div>
-      </div>
-      <div class="haarpStrip">
-        <div class="haarpMeta">
-          <div class="label">LOCAL ALASKA · HAARP</div>
-          <div class="haarpTitle">Gakona SAGO Riometer</div>
-          <div id="haarpStatus" class="haarpStatus good">LIVE</div>
-          <div id="haarpNote" class="haarpSub">30.6 / 38.2 MHz · dips indicate increased ionospheric absorption</div>
-        </div>
-        <div class="haarpPlot">
-          <img id="haarpImg" alt="HAARP Gakona riometer latest 24 hours" />
-          <div class="haarpBadge">UAF · GAKONA</div>
-        </div>
       </div>
     </div>
   </section>
@@ -282,7 +270,6 @@ const NOAA={
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
 const MUF_FEED='https://alaskahamradio.com/wp-json/ahr/v1/muf';
-const HAARP_RIOMETER='https://ionograms.gi.alaska.edu/data/riometer/riometer-latest-24h.png';
 let started=false;
 
 function prop(name,fallback){
@@ -388,37 +375,44 @@ async function updateMUF(){
     const mv=Number(d.muf3000_mhz),fv=Number(d.fof2_mhz);
     if(d.ok===false||!Number.isFinite(mv))throw new Error(d.error||'MUF missing');
 
-    const generatedMs=Date.parse(d.generated_utc||'');
-    const endpointAgeMin=Number.isFinite(generatedMs)?Math.max(0,(Date.now()-generatedMs)/60000):0;
-    const sourceAgeAtGeneration=Number.isFinite(Number(d.newest_age_min))?Number(d.newest_age_min):0;
-    const totalAgeMin=Math.max(0,Math.round(sourceAgeAtGeneration+endpointAgeMin));
-    const fo=Number.isFinite(fv)?' · foF2 '+n(fv,1):'';
-    const station=d.nearest_station?' · '+d.nearest_station:'';
-    const cacheTag=d.served_from_cache?' · API cache':'';
+    const sourceMs=Date.parse(d.source_time_utc||d.generated_utc||'');
+    const ageMin=Number.isFinite(Number(d.source_age_min))
+      ? Math.max(0,Math.round(Number(d.source_age_min)))
+      : (Number.isFinite(sourceMs)?Math.max(0,Math.round((Date.now()-sourceMs)/60000)):null);
 
-    if(totalAgeMin>45){
+    const arrow=(d.trend_arrow==='↑'||d.trend_arrow==='↓'||d.trend_arrow==='→')?d.trend_arrow:'→';
+    const conf=d.confidence?String(d.confidence).toUpperCase():'';
+    const trendText=d.trend?String(d.trend).toUpperCase():'';
+    const fo=Number.isFinite(fv)?' · foF2 '+n(fv,1):'';
+    const age=ageMin!==null?' · '+ageMin+'m old':'';
+    const confText=conf?' · '+conf:'';
+
+    if(ageMin!==null&&ageMin>45){
       muf.textContent='STALE';
-      mufNote.textContent='last '+n(mv,1)+' MHz'+fo+' · '+totalAgeMin+'m old'+station;
+      mufNote.textContent='last '+n(mv,1)+' MHz '+arrow+fo+age+confText;
       paint(muf,'bad');
     }else{
-      muf.textContent=n(mv,1);
-      mufNote.textContent='MHz'+fo+' · '+totalAgeMin+'m old'+cacheTag;
+      muf.textContent=n(mv,1)+' '+arrow;
+      mufNote.textContent='MHz'+fo+age+confText;
       paint(muf,mv>=21?'good':mv>=14?'warn':'ice');
     }
 
     localStorage.setItem('kl5ne_muf',JSON.stringify({
       t:Date.now(),
+      sourceTime:d.source_time_utc||d.generated_utc||null,
       value:mv,
       fof2:fv,
-      sourceAgeMin:totalAgeMin,
+      ageMin:ageMin,
+      arrow:arrow,
+      confidence:conf,
       note:mufNote.textContent
     }));
   }catch(err){
     const cached=JSON.parse(localStorage.getItem('kl5ne_muf')||'null');
-    if(cached&&Date.now()-cached.t<3*3600e3){
+    if(cached&&Date.now()-cached.t<90*60e3){
       const extra=Math.round((Date.now()-cached.t)/60000);
-      const age=Math.max(0,Number(cached.sourceAgeMin||0)+extra);
-      muf.textContent=age>45?'STALE':n(cached.value,1);
+      const age=Math.max(0,Number(cached.ageMin||0)+extra);
+      muf.textContent=age>45?'STALE':n(cached.value,1)+' '+(cached.arrow||'→');
       mufNote.textContent='last '+n(cached.value,1)+' MHz · '+age+'m old · local cache';
       paint(muf,age>45?'bad':'ice');
     }else{
@@ -428,7 +422,6 @@ async function updateMUF(){
     }
   }
 }
-
 async function updateSpace(){
   try{
     const [flux,mag,sw,kps]=await Promise.all([j(NOAA.flux),j(NOAA.mag),j(NOAA.wind),j(NOAA.kp)]);
@@ -515,26 +508,6 @@ async function updateWeather(){
   }
 }
 
-function updateHAARP(){
-  try{
-    const img=document.getElementById('haarpImg');
-    const st=document.getElementById('haarpStatus');
-    const note=document.getElementById('haarpNote');
-    if(!img||!st||!note)return;
-    img.onload=()=>{
-      st.textContent='LIVE';
-      st.className='haarpStatus good';
-      note.textContent='30.6 / 38.2 MHz · refreshed '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    };
-    img.onerror=()=>{
-      st.textContent='OFFLINE';
-      st.className='haarpStatus bad';
-      note.textContent='HAARP riometer image unavailable';
-    };
-    img.src=HAARP_RIOMETER+'?t='+Date.now();
-  }catch(e){}
-}
-
 function tickClock(){
   const d=new Date();
   const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -543,12 +516,11 @@ function tickClock(){
 }
 function init(){
   if(started)return;started=true;
-  tickClock();updateSpace();updateMUF();updateWeather();updateHAARP();
+  tickClock();updateSpace();updateMUF();updateWeather();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
   setInterval(updateMUF,10*60*1000);
   setInterval(updateWeather,10*60*1000);
-  setInterval(updateHAARP,10*60*1000);
 }
 window.icueEvents=window.icueEvents||{};
 window.icueEvents.onDataUpdated=()=>updateWeather();
