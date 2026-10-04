@@ -90,6 +90,68 @@ body{padding:var(--pad)}
 .hourDesc{font-size:clamp(13px,.88vw,17px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
 .hourTemp{font-size:clamp(20px,1.45vw,29px);font-weight:900;margin-top:7px}
 
+
+.haarpStrip{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:minmax(190px,.42fr) minmax(0,1.58fr);
+  gap:10px;
+  min-height:104px;
+}
+.haarpMeta,.haarpPlot{
+  background:var(--tile);
+  border:1px solid var(--line);
+  border-radius:12px;
+  min-width:0;
+}
+.haarpMeta{
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.haarpTitle{
+  font-size:clamp(13px,.88vw,17px);
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.haarpStatus{
+  margin-top:6px;
+  font-size:clamp(18px,1.3vw,27px);
+  font-weight:900;
+}
+.haarpSub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:clamp(10px,.66vw,13px);
+  line-height:1.25;
+}
+.haarpPlot{
+  overflow:hidden;
+  position:relative;
+  background:#fff;
+}
+.haarpPlot img{
+  width:100%;
+  height:100%;
+  min-height:104px;
+  object-fit:cover;
+  object-position:center 50%;
+  display:block;
+}
+.haarpBadge{
+  position:absolute;
+  top:7px;
+  right:8px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(5,10,15,.78);
+  color:#dff7e8;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
 @media(max-width:1250px){
   :root{--pad:8px;--gap:8px}
   .dashboard{grid-template-columns:1fr}
@@ -143,6 +205,18 @@ body{padding:var(--pad)}
         <div id="b20" class="band"><div class="bandName">20m</div><div class="bandState">--</div></div>
         <div id="b40" class="band"><div class="bandName">40m</div><div class="bandState">--</div></div>
         <div id="b80" class="band"><div class="bandName">80m</div><div class="bandState">--</div></div>
+      </div>
+      <div class="haarpStrip">
+        <div class="haarpMeta">
+          <div class="label">LOCAL ALASKA · HAARP</div>
+          <div class="haarpTitle">Gakona SAGO Riometer</div>
+          <div id="haarpStatus" class="haarpStatus good">LIVE</div>
+          <div id="haarpNote" class="haarpSub">30.6 / 38.2 MHz · dips indicate increased ionospheric absorption</div>
+        </div>
+        <div class="haarpPlot">
+          <img id="haarpImg" alt="HAARP Gakona riometer latest 24 hours" />
+          <div class="haarpBadge">UAF · GAKONA</div>
+        </div>
       </div>
     </div>
   </section>
@@ -208,6 +282,7 @@ const NOAA={
 };
 const FALLBACK={label:'Palmer, Alaska',lat:61.5997,lon:-149.1128};
 const MUF_FEED='https://alaskahamradio.com/wp-json/ahr/v1/muf';
+const HAARP_RIOMETER='https://ionograms.gi.alaska.edu/data/riometer/riometer-latest-24h.png';
 let started=false;
 
 function prop(name,fallback){
@@ -440,6 +515,26 @@ async function updateWeather(){
   }
 }
 
+function updateHAARP(){
+  try{
+    const img=document.getElementById('haarpImg');
+    const st=document.getElementById('haarpStatus');
+    const note=document.getElementById('haarpNote');
+    if(!img||!st||!note)return;
+    img.onload=()=>{
+      st.textContent='LIVE';
+      st.className='haarpStatus good';
+      note.textContent='30.6 / 38.2 MHz · refreshed '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    };
+    img.onerror=()=>{
+      st.textContent='OFFLINE';
+      st.className='haarpStatus bad';
+      note.textContent='HAARP riometer image unavailable';
+    };
+    img.src=HAARP_RIOMETER+'?t='+Date.now();
+  }catch(e){}
+}
+
 function tickClock(){
   const d=new Date();
   const local=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -448,11 +543,12 @@ function tickClock(){
 }
 function init(){
   if(started)return;started=true;
-  tickClock();updateSpace();updateMUF();updateWeather();
+  tickClock();updateSpace();updateMUF();updateWeather();updateHAARP();
   setInterval(tickClock,1000);
   setInterval(updateSpace,5*60*1000);
   setInterval(updateMUF,10*60*1000);
   setInterval(updateWeather,10*60*1000);
+  setInterval(updateHAARP,10*60*1000);
 }
 window.icueEvents=window.icueEvents||{};
 window.icueEvents.onDataUpdated=()=>updateWeather();
